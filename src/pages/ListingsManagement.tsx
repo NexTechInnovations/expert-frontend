@@ -11,6 +11,7 @@ import { useDebounce } from '../hooks/useDebounce';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import BulkActionBar from '../components/dashboard/BulkActionBar';
 import axios from 'axios';
+import { useConfirmationModal } from '../hooks/useConfirmationModal';
 
 const sortOptions = [
     { label: "Listing Created: Newest", value: { sortBy: 'created_at', sortDirection: 'desc' } },
@@ -22,17 +23,21 @@ const sortOptions = [
 const initialFilters = {
     draft: true, live: false, search: '', reference: '', assigned_to_id: '',
     category: '', bedrooms: '', bedrooms_gte: '', type: '', offering_type: '',
-    price_min: '', price_max: '', size_min: '', size_max: '', furnishing_type: ''
+    price_min: '', price_max: '', size_min: '', size_max: '', furnishing_type: '',
+    unit_number: '', expiry_date_from: '', expiry_date_to: '', owner_id: '', rera_permit_number: ''
 };
 
 const ListingsManagement = () => {
     const { listings, pagination, loading, error, fetchListings } = useListings();
-
+    const { openModal, ConfirmationModalComponent } = useConfirmationModal();
+    const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
+    const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+    
+    // ... (باقي الحالات والدوال السابقة) ...
     const [filters, setFilters] = useState(initialFilters);
     const [sort, setSort] = useState(sortOptions[0].value);
     const [currentSortLabel, setCurrentSortLabel] = useState(sortOptions[0].label);
     const debouncedSearch = useDebounce(filters.search, 500);
-
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [isSortOpen, setSortOpen] = useState(false);
     const [isFiltersModalOpen, setFiltersModalOpen] = useState(false);
@@ -43,13 +48,8 @@ const ListingsManagement = () => {
         const activeFilters = { ...filters, search: debouncedSearch };
         Object.keys(activeFilters).forEach(key => {
             const filterKey = key as keyof typeof activeFilters;
-            if (!activeFilters[filterKey]) {
-                delete activeFilters[filterKey];
-            }
+            if (!activeFilters[filterKey]) delete activeFilters[filterKey];
         });
-        if (!activeFilters.draft) delete activeFilters.draft;
-        if (!activeFilters.live) delete activeFilters.live;
-
         fetchListings({ filters: activeFilters, sort });
     }, [filters, debouncedSearch, sort, fetchListings]);
 
@@ -68,7 +68,7 @@ const ListingsManagement = () => {
     };
 
     const handleToggleDrafts = () => {
-        setFilters(prev => ({ ...prev, draft: !prev.draft, live: prev.draft }));
+        setFilters(prev => ({ ...initialFilters, draft: !prev.draft, live: prev.draft }));
     };
     
     const handleSelectionChange = (id: string, isSelected: boolean) => {
@@ -92,10 +92,13 @@ const ListingsManagement = () => {
         applyFiltersAndFetch();
     };
 
-    const handleBulkAction = async (action: 'publish' | 'archive') => {
-        const promises = Array.from(selectedIds).map(id => 
-            axios.post(`http://localhost:5000/api/listings/listings/${id}/${action}`)
-        );
+   const handleBulkAction = async (action: 'publish' | 'archive' | 'unarchive' | 'reject' | 'reassign', data?: any) => {
+        setIsSubmittingAction(true);
+        const promises = Array.from(selectedIds).map(id => {
+            const endpoint = `http://localhost:5000/api/listings/listings/${id}/${action}`;
+            return axios.post(endpoint, data);
+        });
+        
         try {
             await Promise.all(promises);
             alert(`Successfully performed ${action} on ${selectedIds.size} listings.`);
@@ -104,8 +107,28 @@ const ListingsManagement = () => {
             setIsSelectionMode(false);
         } catch (err) {
             alert(`Failed to perform ${action}. Please try again.`);
+        } finally {
+            setIsSubmittingAction(false);
         }
     };
+
+      const confirmAction = (action: 'publish' | 'archive' | 'unarchive' | 'reject') => {
+        const actionText = action.charAt(0).toUpperCase() + action.slice(1);
+        openModal({
+            title: `${actionText} Listings`,
+            description: `Are you sure you want to ${action} ${selectedIds.size} selected listing(s)?`,
+            confirmText: actionText,
+            isDestructive: action === 'reject',
+            onConfirm: () => handleBulkAction(action),
+        });
+    };
+
+    //  const handleReassign = async (agentId: string) => {
+    //     await handleBulkAction('reassign', { assigned_to_id: agentId });
+    //     setIsReassignModalOpen(false);
+    // };
+
+
 
     const handleDeselectAll = () => {
         setSelectedIds(new Set());
@@ -130,14 +153,10 @@ const ListingsManagement = () => {
     
     return (
         <>
-            {isFiltersModalOpen && (
-                <MoreFiltersModal 
-                    onClose={() => setFiltersModalOpen(false)}
-                    initialFilters={filters}
-                    onApply={handleApplyModalFilters}
-                />
-            )}
-            
+                       {isFiltersModalOpen && <MoreFiltersModal onClose={() => setFiltersModalOpen(false)} initialFilters={filters} onApply={handleApplyModalFilters} />}
+        {/* {isReassignModalOpen && <ReassignModal isOpen={isReassignModalOpen} onClose={() => setIsReassignModalOpen(false)} onReassign={handleReassign} selectedCount={selectedIds.size} isReassigning={isSubmittingAction} />} */}
+                        {ConfirmationModalComponent}
+
             <div className="flex flex-col h-full bg-gray-50">
                 <div className="p-4 sm:p-6 md:p-8 space-y-4 lg:space-y-6 bg-gray-50 flex-shrink-0 z-10">
                     <div className="hidden lg:flex flex-wrap gap-y-4 items-center justify-between">
@@ -209,11 +228,15 @@ const ListingsManagement = () => {
                 </div>
                 
                 {selectedIds.size > 0 && (
-                    <BulkActionBar 
+                   <BulkActionBar 
                         selectedCount={selectedIds.size}
+                        isDraftMode={filters.draft}
                         onDeselectAll={handleDeselectAll}
-                        onPublish={() => handleBulkAction('publish')}
-                        onArchive={() => handleBulkAction('archive')}
+                        onPublish={() => confirmAction('publish')}
+                        onUnpublish={() => confirmAction('unarchive')}
+                        onArchive={() => confirmAction('archive')}
+                        onReject={() => confirmAction('reject')}
+                        onReassignClick={() => setIsReassignModalOpen(true)}
                     />
                 )}
                 

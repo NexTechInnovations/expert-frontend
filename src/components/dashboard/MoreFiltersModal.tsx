@@ -1,20 +1,33 @@
+
 import React, { useState } from 'react';
 import { X, Search } from 'lucide-react';
 import CustomSelect from '../ui/CustomSelect';
 import { cn } from '../../lib/utils';
+import DatePicker from 'react-datepicker';
 
 interface MoreFiltersModalProps {
-  onClose: () => void;
+ onClose: () => void;
   initialFilters: { [key: string]: any };
   onApply: (newFilters: { [key:string]: any }) => void;
 }
 
 const MoreFiltersModal = ({ onClose, initialFilters, onApply }: MoreFiltersModalProps) => {
   const [tempFilters, setTempFilters] = useState(initialFilters);
+  const [expiryDateRange, setExpiryDateRange] = useState<[Date | null, Date | null]>([null, null]);
 
   const handleFilterChange = (key: string, value: string) => {
     setTempFilters(prev => ({ ...prev, [key]: value }));
   };
+
+    const handleDateChange = (dates: [Date | null, Date | null]) => {
+      const [start, end] = dates;
+      setExpiryDateRange(dates);
+      setTempFilters(prev => ({
+          ...prev,
+          expiry_date_from: start ? start.toISOString().split('T')[0] : '',
+          expiry_date_to: end ? end.toISOString().split('T')[0] : '',
+      }));
+  }
 
   const handleBedroomClick = (opt: string) => {
       if (opt === '5+') {
@@ -32,27 +45,37 @@ const MoreFiltersModal = ({ onClose, initialFilters, onApply }: MoreFiltersModal
   const handleResetClick = () => {
       const resetState: { [key: string]: any } = {};
       Object.keys(initialFilters).forEach(key => { resetState[key] = ''; });
-      resetState.draft = true;
-      resetState.live = false;
+      // الحفاظ على الفلاتر الأساسية للصفحة
+      if (initialFilters.draft) resetState.draft = true;
+      if (initialFilters.live) resetState.live = true;
+      if (initialFilters.archived) resetState.archived = true;
       setTempFilters(resetState);
-      onApply(resetState);
-      onClose();
-  }
+      setExpiryDateRange([null, null]);
+  };
 
+
+  // options for selects
   const bedroomOptions = ['Studio', '1', '2', '3', '4', '5+'];
   const categoryOptions = [ { value: 'residential', label: 'Residential' }, { value: 'commercial', label: 'Commercial' } ];
   const offeringOptions = [ { value: 'sale', label: 'For Sale' }, { value: 'rent', label: 'For Rent' } ];
   const furnishingOptions = [ { value: 'furnished', label: 'Furnished' }, { value: 'unfurnished', label: 'Unfurnished' } , {value : 'semi-furnished' , label : 'Semi furnished'} ];
+  const typeOptions = [ { value: 'villa', label: 'Villa' }, { value: 'townhouse', label: 'Townhouse' } , {value : 'warehouse' , label : 'Warehouse'} , {value : 'factory' , label : 'Factory'} , {value : 'farm' , label : 'Farm'}  , {value : 'shop' , label : 'Shop'} , {value : 'showroom' , label : 'Showroom'}];
+  const exposureOptions = [ { value: 'front', label: 'Front' }, { value: 'back', label: 'Back' } ];
+  const spotlightStatusOptions = [ { value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' } ];
+  const verificationStatusOptions = [  { value: 'pending', label: 'Pending' } , { value: 'approved', label: 'Approved' } , { value: 'rejected', label: 'Rejected' } , { value: 'expired', label: 'Expired' },  ];
+  const stateOptions = [ { value: 'draft', label: 'Draft' }, { value: 'live', label: 'Published' }  , { value: 'archived', label: 'Archived' } , { value: 'approved', label: 'Approved' } , { value: 'failed', label: 'Failed' } ];
+  const completionStatusOptions = [ { value: 'completed', label: 'Completed' }, { value: 'in_progress', label: 'In Progress' } ];
+  const expiryDateOptions = [ { value: 'next_month', label: 'Next Month' }, { value: 'next_year', label: 'Next Year' } ];
 
   const Label = ({ children }: { children: React.ReactNode }) => (
     <label className="text-xs font-semibold text-gray-600 block mb-1.5">{children}</label>
   );
 
   const baseInputStyles = "w-full p-2.5 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 outline-none transition-shadow";
-  
+
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl h-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl h-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center p-6 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-lg font-bold text-gray-900">More Filters</h2>
           <button onClick={onClose} className="p-2 rounded-full text-gray-500 hover:bg-gray-100"><X size={20} /></button>
@@ -61,13 +84,38 @@ const MoreFiltersModal = ({ onClose, initialFilters, onApply }: MoreFiltersModal
         <div className="flex-grow p-8 overflow-y-auto scrollbar-thin">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div><Label>Reference Number</Label><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="text" placeholder="Enter Reference Number" value={tempFilters.reference || ''} onChange={e => handleFilterChange('reference', e.target.value)} className={`${baseInputStyles} pl-9`} /></div></div>
+            
             <div><Label>Agents</Label><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="text" placeholder="Enter Agent ID" value={tempFilters.assigned_to_id || ''} onChange={e => handleFilterChange('assigned_to_id', e.target.value)} className={`${baseInputStyles} pl-9`} /></div></div>
+            
+            <div><Label>Exposure Type</Label><CustomSelect options={exposureOptions} placeholder="Select exposure type" value={tempFilters.exposureType || ''} onChange={v => handleFilterChange('exposureType', v)} /></div>
+            
+            <div><Label>Spotlight Status</Label><CustomSelect options={spotlightStatusOptions} placeholder="Select Status" value={tempFilters.spotlightStatus || ''} onChange={v => handleFilterChange('spotlightStatus', v)} /></div>
+            
+            <div><Label>Verification Status</Label><CustomSelect options={verificationStatusOptions} placeholder="Select Status" value={tempFilters.verificationStatus || ''} onChange={v => handleFilterChange('verificationStatus', v)} /></div>
+            
+            <div><Label>State</Label><CustomSelect options={stateOptions} placeholder="Select State" value={tempFilters.state || ''} onChange={v => handleFilterChange('state', v)} /></div>
+            
+            <div><Label>Completion Status</Label><CustomSelect options={completionStatusOptions} placeholder="Select completion status" value={tempFilters.completionStatus || ''} onChange={v => handleFilterChange('completionStatus', v)} /></div>
+            
             <div><Label>Property category</Label><CustomSelect options={categoryOptions} placeholder="Select property category" value={tempFilters.category || ''} onChange={v => handleFilterChange('category', v)} /></div>
+            
             <div><Label>Offering type</Label><CustomSelect options={offeringOptions} placeholder="Select offering type" value={tempFilters.offering_type || ''} onChange={v => handleFilterChange('offering_type', v)} /></div>
-            <div><Label>Property Type</Label><CustomSelect options={[]} placeholder="Select property type" value={tempFilters.type || ''} onChange={v => handleFilterChange('type', v)} /></div>
+            
+            <div><Label>Property Type</Label><CustomSelect options={typeOptions} placeholder="Select property type" value={tempFilters.type || ''} onChange={v => handleFilterChange('type', v)} /></div>
+            
             <div><Label>Property price (AED)</Label><div className="flex gap-2"><input type="number" placeholder="Min. Price" value={tempFilters.price_min || ''} onChange={e => handleFilterChange('price_min', e.target.value)} className={baseInputStyles} /><input type="number" placeholder="Max. Price" value={tempFilters.price_max || ''} onChange={e => handleFilterChange('price_max', e.target.value)} className={baseInputStyles} /></div></div>
-            <div><Label>Property size (sqft)</Label><div className="flex gap-2"><input type="number" placeholder="Min. Area" value={tempFilters.size_min || ''} onChange={e => handleFilterChange('size_min', e.target.value)} className={baseInputStyles} /><input type="number" placeholder="Max. Area" value={tempFilters.size_max || ''} onChange={e => handleFilterChange('size_max', e.target.value)} className={baseInputStyles} /></div></div>
+            
             <div><Label>Furnishing</Label><CustomSelect options={furnishingOptions} placeholder="Select furnishing" value={tempFilters.furnishing_type || ''} onChange={v => handleFilterChange('furnishing_type', v)} /></div>
+            
+            <div><Label>Property size (sqft)</Label><div className="flex gap-2"><input type="number" placeholder="Min. Area" value={tempFilters.size_min || ''} onChange={e => handleFilterChange('size_min', e.target.value)} className={baseInputStyles} /><input type="number" placeholder="Max. Area" value={tempFilters.size_max || ''} onChange={e => handleFilterChange('size_max', e.target.value)} className={baseInputStyles} /></div></div>
+            
+            <div><Label>Apt/Villa/Unit number</Label><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="text" placeholder="Enter unit number" value={tempFilters.unitNumber || ''} onChange={e => handleFilterChange('unitNumber', e.target.value)} className={`${baseInputStyles} pl-9`} /></div></div>
+            
+ <div><Label>Expiry date</Label><DatePicker selectsRange={true} startDate={expiryDateRange[0]} endDate={expiryDateRange[1]} onChange={handleDateChange} className={baseInputStyles} placeholderText="Select date range" isClearable={true} /></div>            
+            <div><Label>Owner</Label><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="text" placeholder="Select owner" value={tempFilters.owner_name || ''} onChange={e => handleFilterChange('owner_name', e.target.value)} className={`${baseInputStyles} pl-9`} /></div></div>
+            
+            <div className="md:col-span-2"><Label>DTCM/RERA Number</Label><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="text" placeholder="Enter DTCM/RERA Number" value={tempFilters.dtcmReraNumber || ''} onChange={e => handleFilterChange('dtcmReraNumber', e.target.value)} className={`${baseInputStyles} pl-9`} /></div></div>
+
             <div className="md:col-span-2">
                 <Label>Bedrooms</Label>
                 <div className="flex flex-wrap gap-2">

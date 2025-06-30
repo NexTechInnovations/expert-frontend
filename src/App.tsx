@@ -54,6 +54,12 @@ const AppRoutes = () => {
         <ListingsManagement />
     </ListingsProvider>
 } />
+
+          <Route path="listings-archive" element={
+    <ListingsProvider>
+        <ListingsArchive />
+    </ListingsProvider>
+} />
           <Route path="listings-archive" element={<ListingsArchive />} />
           <Route path="cts-listings" element={<CtsListings />} />
           <Route path="listings-settings" element={<ListingsSettings />} />

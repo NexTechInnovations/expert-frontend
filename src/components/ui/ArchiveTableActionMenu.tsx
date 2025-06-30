@@ -1,56 +1,82 @@
-import { useState, useRef, useEffect } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useState, useRef, useEffect } from 'react';
 import { MoreHorizontal, Edit2, Eye, Trash2 } from 'lucide-react';
+import axios from 'axios';
+import { useConfirmationModal } from '../../hooks/useConfirmationModal'; // <-- استيراد الـ Hook
 
-const ArchiveTableActionMenu = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
-  const [isMounted, setIsMounted] = useState(false);
+interface ArchiveTableActionMenuProps {
+    listingId: string;
+    onActionComplete: () => void;
+}
 
-  useEffect(() => {
-    setIsMounted(true); // Component has mounted, so the portal root is available
-  }, []);
+const ArchiveTableActionMenu = ({ listingId, onActionComplete }: ArchiveTableActionMenuProps) => {
+    const { openModal, ConfirmationModalComponent } = useConfirmationModal();
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        setMenuPosition({
-            top: rect.bottom + window.scrollY + 5,
-            left: rect.left + window.scrollX - 150,
-        });
-    }
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
-    const handleClickOutside = (event: MouseEvent) => {
-        if (buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
-            setIsOpen(false);
+    const handleUnarchive = async () => {
+        try {
+            await axios.post(`http://localhost:5000/api/listings/listings/${listingId}/unarchive`);
+            alert('Listing unarchived successfully!');
+            onActionComplete();
+        } catch (error) {
+            alert('Failed to unarchive listing.');
+            console.error('Error unarchiving:', error);
         }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
 
-  const MenuPortal = () => (
-    <div 
-        style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
-        className="fixed w-48 bg-white rounded-md shadow-lg border z-50"
-    >
-      <ul className="py-1">
-        <li><a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><Edit2 size={16} /><span>Edit</span></a></li>
-        <li><a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><Eye size={16} /><span>Unarchive</span></a></li>
-        <li><a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"><Trash2 size={16} /><span>Delete</span></a></li>
-      </ul>
-    </div>
-  );
+    const confirmUnarchive = () => {
+        setIsOpen(false);
+        openModal({
+            title: 'Are you sure you want to unarchive this listing?',
+            description: 'Listing will appear under the Listings Management tab.',
+            confirmText: 'Submit',
+            onConfirm: handleUnarchive,
+        });
+    };
+    
+    // يمكنك إضافة منطق الحذف هنا بنفس طريقة ActionMenu إذا أردت
 
-  return (
-    <>
-      <button ref={buttonRef} onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100">
-        <MoreHorizontal size={20} />
-      </button>
-      {isMounted && isOpen ? ReactDOM.createPortal(<MenuPortal />, document.getElementById('portal-root')!) : null}
-    </>
-  );
+    return (
+        <>
+            <div className="relative" ref={menuRef}>
+                <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none">
+                    <MoreHorizontal size={20} />
+                </button>
+                {isOpen && (
+                    <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                        <ul className="py-1">
+                            <li>
+                                <button className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <Edit2 size={16} /> Edit
+                                </button>
+                            </li>
+                            <li>
+                                <button onClick={confirmUnarchive} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <Eye size={16} /> Unarchive
+                                </button>
+                            </li>
+                            <li>
+                                <button className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                    <Trash2 size={16} /> Delete
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                )}
+            </div>
+            {ConfirmationModalComponent}
+        </>
+    );
 };
 
 export default ArchiveTableActionMenu;

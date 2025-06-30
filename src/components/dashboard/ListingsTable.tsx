@@ -64,9 +64,13 @@ const ListingsTable = ({ listings, isSelectionMode, selectedIds, onSelectionChan
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.size ? `${listing.size} sqft` : '-'}</td>
                                 <td className="px-6 py-4 text-sm text-gray-600 truncate max-w-xs">{listing.location?.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap"><QualityScoreCircle score={listing.quality_score?.value || 0} /></td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
-                                    {listing.price?.amounts?.[listing.price.type] ? `${listing.price.amounts[listing.price.type].toLocaleString()} AED` : 'POA'}
-                                </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
+                    {listing.price?.amounts?.[listing.price.type] 
+                        ? `${listing.price.amounts[listing.price.type].toLocaleString()} AED`
+                        : listing.price?.amounts && Object.values(listing.price.amounts)[0]
+                        ? `${Object.values(listing.price.amounts)[0].toLocaleString()} AED`
+                        : 'POA'}
+                    </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-center"><span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 capitalize">{listing.state.type}</span></td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{new Date(listing.updated_at).toLocaleDateString()}</td>
                                 

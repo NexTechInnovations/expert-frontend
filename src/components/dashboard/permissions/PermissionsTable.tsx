@@ -4,7 +4,6 @@ import { Check, X } from 'lucide-react';
 const Checkmark = () => <Check size={20} className="text-green-600 mx-auto" />;
 const Crossmark = () => <X size={20} className="text-red-500 mx-auto" />;
 
-// تعريف الواجهات مرة أخرى لضمان وضوح الكود
 interface Role {
     id: number;
     name: string;
