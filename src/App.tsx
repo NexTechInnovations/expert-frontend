@@ -30,6 +30,7 @@ import AddNewUser from "./pages/AddNewUser";
 import NewCustomRole from "./pages/NewCustomRole";
 import LoginPage from "./pages/LoginPage";
 import UserDetails from "./pages/UserDetails";
+import CompanyProfile from "./pages/CompanyProfile";
 import { ListingsProvider } from "./context/ListingsContext";
 import LeadDetails from "./pages/LeadDetails";
 
@@ -78,7 +79,8 @@ const AppRoutes = () => {
           <Route path="request-statement" element={<RequestStatement />} />
           <Route path="users" element={<Users />} />
           <Route path="add-new-user" element={<AddNewUser />} />
-          <Route path="users/:id" element={<UserDetails />} /> 
+          <Route path="users/:id" element={<UserDetails />} />
+          <Route path="company-profile" element={<CompanyProfile />} /> 
           <Route path="add-new-custom-role" element={<NewCustomRole />} />
           <Route path="roles-permissions" element={<RolesAndPermissions />} />
           <Route path="security" element={<Security />} />

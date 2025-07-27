@@ -57,7 +57,7 @@ const SidebarContent = () => {
       label: 'Users & Roles', href: '#', icon: Users2Icon,
       children: [
         { label: 'Users', href: '/users', icon: Users2Icon },
-        { label: 'Roles & Permissions', href: '/roles-permissions', icon: Shield }, 
+        { label: 'Roles & Permissions', href: '/roles-permissions', icon: Shield },
       ]
     },  
     { label: 'Security', href: '/security', icon: Shield },

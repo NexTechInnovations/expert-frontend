@@ -16,6 +16,219 @@ const FormField = ({ label, children, required = false }: { label: string, child
     </div>
 );
 
+// قائمة الجنسيات
+const nationalities = [
+    { value: 'Emirati', label: 'Emirati' },
+    { value: 'Saudi', label: 'Saudi' },
+    { value: 'Kuwaiti', label: 'Kuwaiti' },
+    { value: 'Bahraini', label: 'Bahraini' },
+    { value: 'Qatari', label: 'Qatari' },
+    { value: 'Omani', label: 'Omani' },
+    { value: 'Egyptian', label: 'Egyptian' },
+    { value: 'Jordanian', label: 'Jordanian' },
+    { value: 'Lebanese', label: 'Lebanese' },
+    { value: 'Syrian', label: 'Syrian' },
+    { value: 'Iraqi', label: 'Iraqi' },
+    { value: 'Palestinian', label: 'Palestinian' },
+    { value: 'Yemeni', label: 'Yemeni' },
+    { value: 'British', label: 'British' },
+    { value: 'American', label: 'American' },
+    { value: 'Canadian', label: 'Canadian' },
+    { value: 'Australian', label: 'Australian' },
+    { value: 'French', label: 'French' },
+    { value: 'German', label: 'German' },
+    { value: 'Italian', label: 'Italian' },
+    { value: 'Spanish', label: 'Spanish' },
+    { value: 'Dutch', label: 'Dutch' },
+    { value: 'Belgian', label: 'Belgian' },
+    { value: 'Swiss', label: 'Swiss' },
+    { value: 'Austrian', label: 'Austrian' },
+    { value: 'Swedish', label: 'Swedish' },
+    { value: 'Norwegian', label: 'Norwegian' },
+    { value: 'Danish', label: 'Danish' },
+    { value: 'Finnish', label: 'Finnish' },
+    { value: 'Polish', label: 'Polish' },
+    { value: 'Czech', label: 'Czech' },
+    { value: 'Hungarian', label: 'Hungarian' },
+    { value: 'Romanian', label: 'Romanian' },
+    { value: 'Slovak', label: 'Slovak' },
+    { value: 'Slovenian', label: 'Slovenian' },
+    { value: 'Croatian', label: 'Croatian' },
+    { value: 'Bosnian', label: 'Bosnian' },
+    { value: 'Montenegrin', label: 'Montenegrin' },
+    { value: 'Macedonian', label: 'Macedonian' },
+    { value: 'Albanian', label: 'Albanian' },
+    { value: 'Latvian', label: 'Latvian' },
+    { value: 'Estonian', label: 'Estonian' },
+    { value: 'Lithuanian', label: 'Lithuanian' },
+    { value: 'Belarusian', label: 'Belarusian' },
+    { value: 'Ukrainian', label: 'Ukrainian' },
+    { value: 'Russian', label: 'Russian' },
+    { value: 'Turkish', label: 'Turkish' },
+    { value: 'Greek', label: 'Greek' },
+    { value: 'Portuguese', label: 'Portuguese' },
+    { value: 'Irish', label: 'Irish' },
+    { value: 'Luxembourgish', label: 'Luxembourgish' },
+    { value: 'Maltese', label: 'Maltese' },
+    { value: 'Cypriot', label: 'Cypriot' },
+    { value: 'Bulgarian', label: 'Bulgarian' },
+    { value: 'Japanese', label: 'Japanese' },
+    { value: 'Korean', label: 'Korean' },
+    { value: 'Chinese', label: 'Chinese' },
+    { value: 'Indian', label: 'Indian' },
+    { value: 'Pakistani', label: 'Pakistani' },
+    { value: 'Bangladeshi', label: 'Bangladeshi' },
+    { value: 'Nepalese', label: 'Nepalese' },
+    { value: 'Sri Lankan', label: 'Sri Lankan' },
+    { value: 'Myanmar', label: 'Myanmar' },
+    { value: 'Thai', label: 'Thai' },
+    { value: 'Vietnamese', label: 'Vietnamese' },
+    { value: 'Cambodian', label: 'Cambodian' },
+    { value: 'Laotian', label: 'Laotian' },
+    { value: 'Malaysian', label: 'Malaysian' },
+    { value: 'Singaporean', label: 'Singaporean' },
+    { value: 'Indonesian', label: 'Indonesian' },
+    { value: 'Filipino', label: 'Filipino' },
+    { value: 'New Zealander', label: 'New Zealander' },
+    { value: 'South African', label: 'South African' },
+    { value: 'Nigerian', label: 'Nigerian' },
+    { value: 'Kenyan', label: 'Kenyan' },
+    { value: 'Ugandan', label: 'Ugandan' },
+    { value: 'Tanzanian', label: 'Tanzanian' },
+    { value: 'Ethiopian', label: 'Ethiopian' },
+];
+
+// قائمة اللغات
+const languages = [
+    { value: 'Arabic', label: 'Arabic' },
+    { value: 'English', label: 'English' },
+    { value: 'French', label: 'French' },
+    { value: 'German', label: 'German' },
+    { value: 'Italian', label: 'Italian' },
+    { value: 'Spanish', label: 'Spanish' },
+    { value: 'Portuguese', label: 'Portuguese' },
+    { value: 'Russian', label: 'Russian' },
+    { value: 'Chinese', label: 'Chinese' },
+    { value: 'Japanese', label: 'Japanese' },
+    { value: 'Korean', label: 'Korean' },
+    { value: 'Hindi', label: 'Hindi' },
+    { value: 'Urdu', label: 'Urdu' },
+    { value: 'Bengali', label: 'Bengali' },
+    { value: 'Turkish', label: 'Turkish' },
+    { value: 'Persian', label: 'Persian' },
+    { value: 'Hebrew', label: 'Hebrew' },
+    { value: 'Greek', label: 'Greek' },
+    { value: 'Dutch', label: 'Dutch' },
+    { value: 'Swedish', label: 'Swedish' },
+    { value: 'Norwegian', label: 'Norwegian' },
+    { value: 'Danish', label: 'Danish' },
+    { value: 'Finnish', label: 'Finnish' },
+    { value: 'Polish', label: 'Polish' },
+    { value: 'Czech', label: 'Czech' },
+    { value: 'Hungarian', label: 'Hungarian' },
+    { value: 'Romanian', label: 'Romanian' },
+    { value: 'Bulgarian', label: 'Bulgarian' },
+    { value: 'Croatian', label: 'Croatian' },
+    { value: 'Serbian', label: 'Serbian' },
+    { value: 'Bosnian', label: 'Bosnian' },
+    { value: 'Albanian', label: 'Albanian' },
+    { value: 'Macedonian', label: 'Macedonian' },
+    { value: 'Slovenian', label: 'Slovenian' },
+    { value: 'Slovak', label: 'Slovak' },
+    { value: 'Latvian', label: 'Latvian' },
+    { value: 'Estonian', label: 'Estonian' },
+    { value: 'Lithuanian', label: 'Lithuanian' },
+    { value: 'Ukrainian', label: 'Ukrainian' },
+    { value: 'Belarusian', label: 'Belarusian' },
+    { value: 'Georgian', label: 'Georgian' },
+    { value: 'Armenian', label: 'Armenian' },
+    { value: 'Azerbaijani', label: 'Azerbaijani' },
+    { value: 'Kazakh', label: 'Kazakh' },
+    { value: 'Uzbek', label: 'Uzbek' },
+    { value: 'Kyrgyz', label: 'Kyrgyz' },
+    { value: 'Tajik', label: 'Tajik' },
+    { value: 'Turkmen', label: 'Turkmen' },
+    { value: 'Mongolian', label: 'Mongolian' },
+    { value: 'Thai', label: 'Thai' },
+    { value: 'Vietnamese', label: 'Vietnamese' },
+    { value: 'Indonesian', label: 'Indonesian' },
+    { value: 'Malay', label: 'Malay' },
+    { value: 'Filipino', label: 'Filipino' },
+    { value: 'Burmese', label: 'Burmese' },
+    { value: 'Khmer', label: 'Khmer' },
+    { value: 'Lao', label: 'Lao' },
+    { value: 'Nepali', label: 'Nepali' },
+    { value: 'Sinhala', label: 'Sinhala' },
+    { value: 'Tamil', label: 'Tamil' },
+    { value: 'Telugu', label: 'Telugu' },
+    { value: 'Kannada', label: 'Kannada' },
+    { value: 'Malayalam', label: 'Malayalam' },
+    { value: 'Marathi', label: 'Marathi' },
+    { value: 'Gujarati', label: 'Gujarati' },
+    { value: 'Punjabi', label: 'Punjabi' },
+    { value: 'Bengali', label: 'Bengali' },
+    { value: 'Odia', label: 'Odia' },
+    { value: 'Assamese', label: 'Assamese' },
+    { value: 'Kashmiri', label: 'Kashmiri' },
+    { value: 'Sindhi', label: 'Sindhi' },
+    { value: 'Konkani', label: 'Konkani' },
+    { value: 'Manipuri', label: 'Manipuri' },
+    { value: 'Khasi', label: 'Khasi' },
+    { value: 'Mizo', label: 'Mizo' },
+    { value: 'Garo', label: 'Garo' },
+    { value: 'Naga', label: 'Naga' },
+    { value: 'Bodo', label: 'Bodo' },
+    { value: 'Santhali', label: 'Santhali' },
+    { value: 'Dogri', label: 'Dogri' },
+    { value: 'Kashmiri', label: 'Kashmiri' },
+    { value: 'Sanskrit', label: 'Sanskrit' },
+    { value: 'Pali', label: 'Pali' },
+    { value: 'Prakrit', label: 'Prakrit' },
+    { value: 'Apabhramsha', label: 'Apabhramsha' },
+    { value: 'Pahari', label: 'Pahari' },
+    { value: 'Rajasthani', label: 'Rajasthani' },
+    { value: 'Bhojpuri', label: 'Bhojpuri' },
+    { value: 'Awadhi', label: 'Awadhi' },
+    { value: 'Braj', label: 'Braj' },
+    { value: 'Bundeli', label: 'Bundeli' },
+    { value: 'Bagheli', label: 'Bagheli' },
+    { value: 'Chhattisgarhi', label: 'Chhattisgarhi' },
+    { value: 'Haryanvi', label: 'Haryanvi' },
+    { value: 'Kumaoni', label: 'Kumaoni' },
+    { value: 'Garhwali', label: 'Garhwali' },
+    { value: 'Kangri', label: 'Kangri' },
+    { value: 'Dogri', label: 'Dogri' },
+    { value: 'Pahari', label: 'Pahari' },
+    { value: 'Kashmiri', label: 'Kashmiri' },
+    { value: 'Ladakhi', label: 'Ladakhi' },
+    { value: 'Balti', label: 'Balti' },
+    { value: 'Shina', label: 'Shina' },
+    { value: 'Burushaski', label: 'Burushaski' },
+    { value: 'Khowar', label: 'Khowar' },
+    { value: 'Kalasha', label: 'Kalasha' },
+    { value: 'Torwali', label: 'Torwali' },
+    { value: 'Kohistani', label: 'Kohistani' },
+    { value: 'Hindko', label: 'Hindko' },
+    { value: 'Saraiki', label: 'Saraiki' },
+    { value: 'Punjabi', label: 'Punjabi' },
+    { value: 'Sindhi', label: 'Sindhi' },
+    { value: 'Balochi', label: 'Balochi' },
+    { value: 'Pashto', label: 'Pashto' },
+    { value: 'Brahui', label: 'Brahui' },
+    { value: 'Shina', label: 'Shina' },
+    { value: 'Khowar', label: 'Khowar' },
+    { value: 'Kalasha', label: 'Kalasha' },
+    { value: 'Torwali', label: 'Torwali' },
+    { value: 'Kohistani', label: 'Kohistani' },
+    { value: 'Hindko', label: 'Hindko' },
+    { value: 'Saraiki', label: 'Saraiki' },
+    { value: 'Punjabi', label: 'Punjabi' },
+    { value: 'Sindhi', label: 'Sindhi' },
+    { value: 'Balochi', label: 'Balochi' },
+    { value: 'Pashto', label: 'Pashto' },
+    { value: 'Brahui', label: 'Brahui' },
+];
+
 // قائمة أكواد الدول
 const countryCodes = [
     { value: '971', label: '+971' },
@@ -114,6 +327,8 @@ const AddNewUser = () => {
     const [loginEmail, setLoginEmail] = useState('');
     const [password, setPassword] = useState('');
     const [selectedRole, setSelectedRole] = useState<Option | null>(null);
+    const [nationality, setNationality] = useState<Option | null>(null);
+    const [selectedLanguages, setSelectedLanguages] = useState<Option[]>([]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -123,7 +338,15 @@ const AddNewUser = () => {
         roles.map(role => ({ value: role.id.toString(), label: role.name })),
     [roles]);
 
-    const isFormValid = firstName && phoneNumber && validatePhoneNumber(phoneNumber) && loginEmail && validateEmail(loginEmail) && password && selectedRole;
+    // التحقق من صحة النموذج - إذا كان role 3، يجب إضافة الجنسية واللغات
+    const isFormValid = firstName && 
+        phoneNumber && 
+        validatePhoneNumber(phoneNumber) && 
+        loginEmail && 
+        validateEmail(loginEmail) && 
+        password && 
+        selectedRole &&
+        (selectedRole.value !== '3' || (nationality && selectedLanguages.length > 0));
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -140,7 +363,16 @@ const AddNewUser = () => {
         const fullPhoneNumber = phoneCode ? `+${phoneCode.value}${phoneNumber}` : '';
         const roleId = selectedRole ? Number(selectedRole.value) : null;
 
-        const userData = {
+        const userData: {
+            firstName: string;
+            lastName: string;
+            phoneNumber: string;
+            loginEmail: string;
+            roleId: number | null;
+            password: string;
+            nationality?: string;
+            language?: string[];
+        } = {
             firstName,
             lastName,
             phoneNumber: fullPhoneNumber,
@@ -148,6 +380,12 @@ const AddNewUser = () => {
             roleId,
             password,
         };
+
+        // إضافة الجنسية واللغات إذا كان role 3
+        if (selectedRole.value === '3') {
+            userData.nationality = nationality?.value as string;
+            userData.language = selectedLanguages.map(lang => lang.value as string);
+        }
 
         try {
             await axios.post(`${import.meta.env.VITE_BASE_URL}/api/users`, userData);
@@ -160,6 +398,8 @@ const AddNewUser = () => {
             setPassword('');
             setSelectedRole(null);
             setPhoneCode(countryCodes[0]);
+            setNationality(null);
+            setSelectedLanguages([]);
 
             setTimeout(() => navigate('/users'), 2000); 
 
@@ -223,6 +463,50 @@ const AddNewUser = () => {
                         <FormField label="Role" required>
                             <CustomSelect options={roleOptions} placeholder="Select a role" value={selectedRole} onChange={setSelectedRole} />
                         </FormField>
+                        
+                        {/* الحقول الإضافية التي تظهر فقط عند اختيار role 3 */}
+                        {selectedRole?.value === '3' && (
+                            <>
+                                <FormField label="Nationality" required>
+                                    <CustomSelect 
+                                        options={nationalities} 
+                                        placeholder="Select nationality" 
+                                        value={nationality} 
+                                        onChange={setNationality} 
+                                    />
+                                </FormField>
+                                <FormField label="Languages" required>
+                                    <div className="space-y-2">
+                                        <CustomSelect 
+                                            options={languages} 
+                                            placeholder="Select languages" 
+                                            value={null} 
+                                            onChange={(selected) => {
+                                                if (selected && !selectedLanguages.find(lang => lang.value === selected.value)) {
+                                                    setSelectedLanguages(prev => [...prev, selected]);
+                                                }
+                                            }} 
+                                        />
+                                        {selectedLanguages.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {selectedLanguages.map((lang, index) => (
+                                                    <div key={lang.value} className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-sm">
+                                                        <span>{lang.label}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLanguages(prev => prev.filter((_, i) => i !== index))}
+                                                            className="text-red-500 hover:text-red-700 ml-1"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </FormField>
+                            </>
+                        )}
                         <div>
                             <button 
                                 type="submit"

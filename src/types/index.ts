@@ -64,7 +64,101 @@ export interface ListingState {
 }
 
 export type ListingAction =
-  | { type: 'UPDATE_FIELD'; field: keyof ListingState; value: any; }
+  | { type: 'UPDATE_FIELD'; field: keyof ListingState; value: unknown; }
   | { type: 'RESET_PERMIT' }
   | { type: 'RESET_REQUIREMENTS' }
   | { type: 'SET_IMAGES'; value: File[] }; // تم تعديل هنا
+
+export interface Notification {
+  id: string;
+  userId: number;
+  notificationTypeId: number;
+  title: string;
+  body: string;
+  reference: {
+    type: string;
+    id: string;
+  };
+  action: {
+    type: string;
+    payload: string;
+  };
+  seenAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationsResponse {
+  data: Notification[];
+  pagination: {
+    page: number;
+    perPage: number;
+    total: number;
+    totalPages: number;
+  };
+  meta: {
+    total: number;
+    totalSeen: number;
+    totalNotSeen: number;
+  };
+}
+
+export interface NotificationPreference {
+  typeId: number;
+  receiveInApp: boolean;
+  receiveEmail: boolean;
+  receiveSMS: boolean;
+  receivePush: boolean;
+}
+
+export interface NotificationPreferencesResponse {
+  data: NotificationPreference[];
+}
+
+export interface UpdateNotificationPreferenceRequest {
+  data: NotificationPreference[];
+}
+
+export interface UpdateNotificationPreferenceResponse {
+  status: string;
+  message: string;
+  data: Array<{
+    id: number;
+    userId: string;
+    notificationTypeId: number;
+    receiveInApp: boolean;
+    receiveEmail: boolean;
+    receiveSMS: boolean;
+    receivePush: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+}
+
+export interface WatermarkImage {
+  url: string;
+}
+
+export interface WatermarkText {
+  text: string;
+  fontFamily: string;
+  fontRatio: number;
+}
+
+export interface Watermark {
+  position: string;
+  type: 'image' | 'text';
+  opacity: number;
+  image: WatermarkImage;
+  text: WatermarkText;
+  ratio: number;
+  status: string;
+}
+
+export interface WatermarkResponse {
+  status: string;
+  data: {
+    clientId: string;
+    watermark: Watermark;
+    isDisabled: boolean;
+  };
+}

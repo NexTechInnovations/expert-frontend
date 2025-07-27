@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronUp, ChevronDown, User as UserIcon, Briefcase, Gem, LogOut } from 'lucide-react';
 import { useAuth, useLogout } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const UserProfile = () => {
     const [isOpen, setIsOpen] = useState(false);
-        const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const navigate = useNavigate();
 
     const containerRef = useRef<HTMLDivElement>(null);
-   const { user } = useAuth(); // جلب بيانات المستخدم
+    const { user } = useAuth(); // جلب بيانات المستخدم
     const logout = useLogout(); 
 
     useEffect(() => {
@@ -55,9 +57,15 @@ const UserProfile = () => {
                         <a href="#" className="group flex w-full items-center rounded-md px-4 py-2.5 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-700">
                             <UserIcon className="mr-3 h-5 w-5 text-gray-500 group-hover:text-violet-700" /> User Profile
                         </a>
-                        <a href="#" className="group flex w-full items-center rounded-md px-4 py-2.5 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-700">
+                        <button 
+                            onClick={() => {
+                                navigate('/company-profile');
+                                setIsOpen(false);
+                            }}
+                            className="group flex w-full items-center rounded-md px-4 py-2.5 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-700"
+                        >
                             <Briefcase className="mr-3 h-5 w-5 text-gray-500 group-hover:text-violet-700" /> Company Profile
-                        </a>
+                        </button>
                         <a href="#" className="group flex w-full items-center rounded-md px-4 py-2.5 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-700">
                             <Gem className="mr-3 h-5 w-5 text-gray-500 group-hover:text-violet-700" /> PF Partner Program
                         </a>

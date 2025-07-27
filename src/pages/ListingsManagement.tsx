@@ -189,8 +189,8 @@ const ListingsManagement = () => {
     
     return (
         <>
-            {isFiltersModalOpen && <MoreFiltersModal onClose={() => setFiltersModalOpen(false)} initialFilters={filters} onApply={handleApplyModalFilters} />}
-            {ConfirmationModalComponent}
+                       {isFiltersModalOpen && <MoreFiltersModal onClose={() => setFiltersModalOpen(false)} initialFilters={filters} onApply={handleApplyModalFilters} />}
+                        {ConfirmationModalComponent}
             <ErrorToast 
                 message={errorMessage}
                 show={showError}
