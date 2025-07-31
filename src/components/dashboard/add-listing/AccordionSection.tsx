@@ -23,7 +23,7 @@ const AccordionSection = ({ title, isOpen, isCompleted, isLocked, onToggle, chil
 
   return (
     // <div className={cn("bg-white border rounded-lg", isLocked ? "bg-gray-50" : "border-gray-200/80")}>
-    <div className={cn("bg-white border border-gray-400 rounded-lg", isLocked ? "bg-white" : "border-gray-400")}>
+    <div className={cn("bg-white border border-gray-300 rounded-lg", isLocked ? "bg-[#f3f4f5]" : "border-gray-400")}>
       <button onClick={onToggle} disabled={isLocked} className="w-full flex justify-between items-center p-4 disabled:cursor-not-allowed">
         <div className="flex items-center gap-3">
             {renderIcon()}

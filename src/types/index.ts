@@ -30,8 +30,8 @@ export interface SelectOption {
 }
 
 export interface ListingState {
-  uae_emirate: 'dubai' | 'abu_dhabi' | '';
-  permitType: 'rera' | 'dtcm' | 'none' | null;
+  uae_emirate: 'dubai' | 'abu_dhabi' | 'northern_emirates' | '';
+  permitType: 'rera' | 'dtcm' | 'none' | 'adrec' | 'non-adrec' | null;
   reraPermitNumber: string;
   dtcmPermitNumber: string;
   category: 'residential' | 'commercial' | null;
@@ -152,6 +152,22 @@ export interface Watermark {
   text: WatermarkText;
   ratio: number;
   status: string;
+}
+
+export interface Developer {
+  id: number;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  logo_url: string;
+  properties_count: number;
+}
+
+export interface DevelopersResponse {
+  status: string;
+  message: string;
+  data: Developer[];
 }
 
 export interface WatermarkResponse {

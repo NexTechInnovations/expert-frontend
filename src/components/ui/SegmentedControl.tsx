@@ -14,7 +14,7 @@ interface SegmentedControlProps {
 }
 
 const SegmentedControl = ({ options, value, onChange }: SegmentedControlProps) => (
-  <div className="flex gap-6 w-full flex-col sm:flex-row">
+  <div className="flex gap-3 w-full">
     {options.map(opt => {
       const isActive = value === opt.value;
       return (
@@ -24,19 +24,14 @@ const SegmentedControl = ({ options, value, onChange }: SegmentedControlProps) =
           onClick={() => onChange(opt.value)}
           className={cn(
             "flex-1 flex flex-row items-center justify-center transition-all",
-            "rounded-2xl border text-lg font-medium",
+            "rounded-lg border text-sm font-medium py-3 px-4",
             isActive
-              ? "border-[#3a307f] bg-[#f5f3ff] text-[#3a307f]"
-              : "border-[#e5e7eb] bg-[#fafafa] text-[#3a307f]",
-            "focus:outline-none"
+              ? "border-[#3A307F] bg-[#F5F3FF] text-[#3A307F]"
+              : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
+            // "focus:outline-none focus:ring-2 focus:ring-[#3A307F] focus:ring-offset-2"
           )}
-          style={{
-            minHeight: 55,
-            minWidth: 220,
-            letterSpacing: '0.01em'
-          }}
         >
-          {opt.icon && <span className="mr-2 text-2xl">{opt.icon}</span>}
+          {opt.icon && <span className="mr-2">{opt.icon}</span>}
           <span>{opt.label}</span>
         </button>
       );

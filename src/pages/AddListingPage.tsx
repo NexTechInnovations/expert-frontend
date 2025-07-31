@@ -34,17 +34,52 @@ function listingReducer(state: ListingState, action: ListingAction): ListingStat
     case 'SET_IMAGES':
       return { ...state, images: action.value };
     case 'RESET_PERMIT':
-      return {...state, permitType: null, reraPermitNumber: '', dtcmPermitNumber: ''};
-    case 'RESET_REQUIREMENTS':
+      return {
+        ...state, 
+        permitType: null, 
+        reraPermitNumber: '', 
+        dtcmPermitNumber: '',
+        category: null,
+        offeringType: null,
+        rentalPeriod: null,
+        propertyType: '',
+        propertyLocation: null,
+        assignedAgent: null,
+        reference: '',
+        // Reset other fields that might be affected
+        size: '',
+        bedrooms: '',
+        bathrooms: '',
+        developer: '',
+        unitNumber: '',
+        parkingSlots: '',
+        furnishingType: null,
+        age: '',
+        numberOfFloors: '',
+        projectStatus: '',
+        ownerName: '',
+        price: '',
+        downPayment: '',
+        numberOfCheques: '',
+        amenities: [],
+        title: '',
+        description: '',
+        // Keep emirate and available fields
+        uae_emirate: state.uae_emirate,
+        available: state.available,
+        availableDate: state.availableDate
+      };
+    case 'RESET_REQUIREMENTS': {
         const { uae_emirate, permitType, reraPermitNumber, dtcmPermitNumber } = state;
         return { ...initialState, uae_emirate, permitType, reraPermitNumber, dtcmPermitNumber };
+    }
     default:
       return state;
   }
 }
 
 const AddListingPage = () => {
-  const { isLoading: isAuthLoading } = useAuth();
+  const { isLoading: isAuthLoading, token } = useAuth();
   const navigate = useNavigate();
   const [formData, dispatch] = useReducer(listingReducer, initialState);
   const [activeSection, setActiveSection] = useState('core');
@@ -60,20 +95,23 @@ const AddListingPage = () => {
   const debouncedFormData = useDebounce(formData, 500);
 
   useEffect(() => {
-    if (isAuthLoading) return;
+    if (isAuthLoading || !token) return;
     const fetchLookups = async () => {
         setLoadingLookups(true);
         try {
-            const agentsRes = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/users`);
-            setAgents(agentsRes.data.map((u: any) => ({ value: u.id, label: `${u.first_name} ${u.last_name}` })));
+            const agentsRes = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/users?role=3`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setAgents(agentsRes.data.map((u: { id: number; first_name: string; last_name: string }) => ({ value: u.id, label: `${u.first_name} ${u.last_name}` })));
         } catch (error) { console.error("Failed to fetch lookups", error); } 
         finally { setLoadingLookups(false); }
     };
     fetchLookups();
-  }, [isAuthLoading]);
+  }, [isAuthLoading, token]);
 
 
   useEffect(() => {
+    if (!token) return;
     const calculateScore = async () => {
         const payload = {
             title: { en: debouncedFormData.title },
@@ -90,7 +128,9 @@ const AddListingPage = () => {
             media: { images: debouncedFormData.images.map(() => ({})) }
         };
         try {
-            const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/listings/listings/quality-score`, payload);
+            const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/listings/listings/quality-score`, payload, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             setQualityScore(response.data.value || 0);
         } catch (error) {
             console.error("Failed to calculate quality score", error);
@@ -98,11 +138,16 @@ const AddListingPage = () => {
         }
     };
     calculateScore();
-  }, [debouncedFormData]);
+  }, [debouncedFormData, token]);
 
   const handlePublish = async () => {
     if (!completedSteps.includes('core')) {
         setError("Please complete the 'Core details' section first.");
+        return;
+    }
+
+    if (!token) {
+        setError("Authentication required. Please log in again.");
         return;
     }
       
@@ -110,6 +155,8 @@ const AddListingPage = () => {
     setError(null);
     setShowSuccess(false);
 
+    console.log('Developer value:', formData.developer, 'Type:', typeof formData.developer);
+    
     const listingData = {
       assigned_to: { id: (formData.assignedAgent as SelectOption).value },
       available_from: formData.available === 'immediately' ? new Date().toISOString() : formData.availableDate?.toISOString(),
@@ -131,7 +178,7 @@ const AddListingPage = () => {
       bedrooms: formData.bedrooms,
       bathrooms: formData.bathrooms,
       size: Number(formData.size),
-      developer: formData.developer,
+      developer_id: formData.developer ? Number(formData.developer) : null,
       unit_number: formData.unitNumber,
       parking_slots: Number(formData.parkingSlots),
       furnishing_type: formData.furnishingType,
@@ -139,6 +186,8 @@ const AddListingPage = () => {
       number_of_floors: formData.numberOfFloors ? Number(formData.numberOfFloors) : null,
       owner_name: formData.ownerName,
     };
+
+    console.log('Final listingData:', listingData);
 
     const apiPayload = new FormData();
     apiPayload.append('data', JSON.stringify(listingData));
@@ -148,14 +197,17 @@ const AddListingPage = () => {
 
     try {
         await axios.post(`${import.meta.env.VITE_BASE_URL}/api/listings/listings`, apiPayload, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${token}`
+            }
         });
         setShowSuccess(true);
         setTimeout(() => navigate('/listings-management'), 3000);
-    } catch (err: any) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || "Error: Could not publish listing.";
-        setError(errorMsg);
-    } finally {
+         } catch (err: unknown) {
+         const errorMsg = err instanceof Error ? err.message : "Error: Could not publish listing.";
+         setError(errorMsg);
+     } finally {
         setIsSubmitting(false);
     }
   };

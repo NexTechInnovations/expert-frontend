@@ -69,7 +69,7 @@ export const ListingsProvider = ({ children }: { children: React.ReactNode }) =>
             
             if (results && results.length > 0) {
                 const listingIds = results.map((l: Listing) => l.id).join(',');
-                const attributesResponse = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/listings/listing-attributes?ids=${listingIds}`);
+                const attributesResponse = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/listings/listings/listing-attributes?ids=${listingIds}`);
                 const attributesData = attributesResponse.data;
 
                 const mergedListings = results.map((listing: Listing) => ({

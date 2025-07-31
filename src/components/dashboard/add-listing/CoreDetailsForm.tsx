@@ -27,8 +27,19 @@ const CoreDetailsForm = ({
     value: string | SelectOption | null | Date
   ) => {
     if (field === "uae_emirate") {
+      // Check if emirate actually changed
+      const newEmirate = typeof value === 'string' ? value : '';
+      if (newEmirate !== state.uae_emirate) {
+        // Reset all form data when emirate changes
+        dispatch({ type: "RESET_PERMIT" });
+      }
+    }
+    
+    if (field === "permitType") {
+      // Reset form data when permit type changes
       dispatch({ type: "RESET_PERMIT" });
     }
+    
     if (
       field === "uae_emirate" ||
       field === "category" ||
@@ -67,7 +78,18 @@ const CoreDetailsForm = ({
             (reraPermitNumber && reraPermitNumber.length > 5) ||
             (dtcmPermitNumber && dtcmPermitNumber.length > 5))
         : true;
-    if (baseConditionsMet && dubaiPermitConditionsMet) {
+    
+    const abuDhabiPermitConditionsMet =
+      uae_emirate === "abu_dhabi"
+        ? permitType &&
+          (permitType === "adrec" || permitType === "non-adrec") &&
+          (permitType === "non-adrec" || 
+           (permitType === "adrec" && dtcmPermitNumber && dtcmPermitNumber.length > 5 && reraPermitNumber && reraPermitNumber.length > 5))
+        : true;
+    
+    const northernEmiratesPermitConditionsMet =
+      uae_emirate === "northern_emirates" ? true : true;
+    if (baseConditionsMet && dubaiPermitConditionsMet && abuDhabiPermitConditionsMet && northernEmiratesPermitConditionsMet) {
       onComplete();
     }
   }, [state, onComplete]);
@@ -141,7 +163,7 @@ const CoreDetailsForm = ({
         />
       </FormLabel>
 
-      {/* Permit type (Dubai only) - يظهر فقط إذا تم اختيار Emirate */}
+      {/* Permit type (Dubai) - يظهر فقط إذا تم اختيار Dubai */}
       {state.uae_emirate && state.uae_emirate === "dubai" && (
         <>
           <FormLabel text="Permit type" required>
@@ -195,14 +217,85 @@ const CoreDetailsForm = ({
         </>
       )}
 
-      {/* Category - يظهر فقط إذا تم اختيار Emirate (و Permit type إذا كان Dubai) */}
-      {state.uae_emirate &&
-        (state.uae_emirate !== "dubai" ||
-          (state.permitType &&
-            (state.permitType === "none" ||
-              (state.reraPermitNumber && state.reraPermitNumber.length > 5) ||
-              (state.dtcmPermitNumber &&
-                state.dtcmPermitNumber.length > 5)))) && (
+      {/* Permit type (Abu Dhabi) - يظهر فقط إذا تم اختيار Abu Dhabi */}
+      {state.uae_emirate && state.uae_emirate === "abu_dhabi" && (
+        <>
+          <FormLabel text="Permit type" required>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm font-medium text-gray-700">Permit type *</span>
+              <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-xs text-gray-600">i</span>
+              </div>
+            </div>
+            <SegmentedControl
+              options={[
+                { label: "ADREC", value: "adrec" },
+                { label: "Non-ADREC", value: "non-adrec" },
+              ]}
+              value={state.permitType}
+              onChange={(val) => updateField("permitType", val)}
+            />
+          </FormLabel>
+          
+          {/* Broker license - يظهر فقط إذا تم اختيار ADREC */}
+          {state.permitType === "adrec" && (
+            <FormLabel text="Broker license" required>
+              <CustomSelect
+                placeholder="Select an option*"
+                options={[
+                  { value: "adrec_license_1", label: "ADREC License 1" },
+                  { value: "adrec_license_2", label: "ADREC License 2" },
+                  { value: "adrec_license_3", label: "ADREC License 3" },
+                ]}
+                value={state.reraPermitNumber ? { value: state.reraPermitNumber, label: state.reraPermitNumber } : null}
+                onChange={(val) => updateField("reraPermitNumber", val ? val.value as string : "")}
+              />
+            </FormLabel>
+          )}
+          
+                     {/* Permit number - يظهر فقط إذا تم اختيار ADREC */}
+           {state.permitType === "adrec" && (
+             <FormLabel text="Permit number" required>
+               <div className="flex items-center gap-2">
+                 <input
+                   type="text"
+                   className="w-full p-2.5 border rounded-lg"
+                   value={state.dtcmPermitNumber}
+                   onChange={(e) => updateField("dtcmPermitNumber", e.target.value)}
+                   placeholder="Enter permit number"
+                 />
+                 <button className="bg-white border border-violet-600 text-violet-700 font-semibold py-2.5 px-4 rounded-lg hover:bg-violet-50 transition">
+                   Validate
+                 </button>
+               </div>
+             </FormLabel>
+           )}
+          
+          {/* Informational text for ADREC */}
+          {state.permitType === "adrec" && (
+            <p className="text-xs text-gray-500 mt-1">
+              ADREC requires the broker license number along with the permit number for validation.
+            </p>
+          )}
+        </>
+      )}
+
+             {/* Category - يظهر فقط إذا تم اختيار Emirate (و Permit type إذا كان Dubai أو Abu Dhabi) */}
+       {state.uae_emirate &&
+         (state.uae_emirate === "northern_emirates" ||
+           (state.uae_emirate === "dubai" &&
+             state.permitType &&
+             (state.permitType === "none" ||
+               (state.reraPermitNumber && state.reraPermitNumber.length > 5) ||
+               (state.dtcmPermitNumber && state.dtcmPermitNumber.length > 5))) ||
+           (state.uae_emirate === "abu_dhabi" &&
+             state.permitType &&
+             ((state.permitType === "non-adrec") ||
+              (state.permitType === "adrec" &&
+               state.dtcmPermitNumber &&
+               state.dtcmPermitNumber.length > 5 &&
+               state.reraPermitNumber &&
+               state.reraPermitNumber.length > 5)))) && (
           <FormLabel text="Category" required>
             <SegmentedControl
               options={[

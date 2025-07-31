@@ -3,6 +3,7 @@ import type { ListingAction, ListingState, SelectOption } from "../../../types";
 import CustomSelect from "../../ui/CustomSelect";
 import FormLabel from "../../ui/FormLabel";
 import SegmentedControl from "../../ui/SegmentedControl";
+import DeveloperAutocomplete from "../../ui/DeveloperAutocomplete";
 
 interface FormProps { 
     state: ListingState; 
@@ -41,7 +42,16 @@ const SpecificationsForm = ({ state, dispatch, onComplete }: FormProps) => {
         {value: '6', label:'6'},
 
       ]} value={state.bathrooms ? { value: state.bathrooms, label: state.bathrooms } : null} onChange={(val) => updateField('bathrooms', val ? val.value as string : '')}/></FormLabel>
-      <FormLabel text="Developer"><input type="text" className="w-full p-2.5 border rounded-lg" value={state.developer} onChange={e => updateField('developer', e.target.value)} /></FormLabel>
+      <FormLabel text="Developer">
+        <DeveloperAutocomplete
+          value={state.developer}
+          onChange={(value) => {
+            console.log('Developer onChange:', value);
+            updateField('developer', value);
+          }}
+          placeholder="Search developers..."
+        />
+      </FormLabel>
       <FormLabel text="Unit number"><input type="text" className="w-full p-2.5 border rounded-lg" value={state.unitNumber} onChange={e => updateField('unitNumber', e.target.value)} /><p className="text-xs text-gray-500 mt-1">This data is for internal use only. We won't display it to consumers.</p></FormLabel>
       <FormLabel text="No of parking spaces"><input type="number" className="w-full p-2.5 border rounded-lg" value={state.parkingSlots} onChange={e => updateField('parkingSlots', e.target.value)} /></FormLabel>
       <FormLabel text="Furnishing type" required><SegmentedControl options={[
