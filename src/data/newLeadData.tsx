@@ -1,0 +1,9 @@
+export const purposeOfBuyingOptions = ["own living", "resell", "for renting", "investment"];
+export const propertyTypeOptionsResidential = ["apartment", "villa", "townhouse", "penthouse", "compound", "duplex"];
+export const propertyTypeOptionsCommercial = ["office space", "retail", "shop", "show room", "short term & hotel apartment", "bulk units", "others"];
+export const bedroomsOptions = ["studio", "1", "2", "3", "4", "5", "6+"];
+export const bathroomsOptions = ["1", "2", "3", "4+"];
+export const furnishingOptions = ["furnished", "unfurnished", "semi furnished"];
+export const readinessOptions = ["mortgage approved", "mortgage in progress", "ready to pay"];
+export const purchasePeriodOptions = ["immediate", "in 3 months", "in 6 months", "more than 6 months"];
+export const moveInPeriodOptions = ["immediate", "in 3 months", "in 6 months", "more than 6 months"];
