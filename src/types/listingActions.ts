@@ -85,7 +85,7 @@ export interface Listing {
     title_en: string;
     title_ar?: string;
   };
-  state: ListingState;
+  state: ListingActionState;
   quality_score?: QualityScore;
   assigned_to: {
     id: number;

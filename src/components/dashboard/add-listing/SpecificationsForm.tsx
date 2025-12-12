@@ -23,7 +23,7 @@ const SpecificationsForm = ({ state, dispatch, onComplete }: FormProps) => {
 
   return (
     <div className="space-y-6">
-      <FormLabel text="Size (sqft)" required><div className="relative"><input type="number" className="w-full p-2.5 border rounded-lg" value={state.size} onChange={e => updateField('size', e.target.value)} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">sqft</span></div></FormLabel>
+      <FormLabel text="Size (sqft)" required><div className="relative"><input type="number" className="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500" value={state.size} onChange={e => updateField('size', e.target.value)} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">sqft</span></div></FormLabel>
       <FormLabel text="Bedrooms" required><CustomSelect placeholder="Select an option" options={[
         {value: 'studio', label:'Studio'},
         {value: '1', label:'1'},
@@ -52,8 +52,8 @@ const SpecificationsForm = ({ state, dispatch, onComplete }: FormProps) => {
           placeholder="Search developers..."
         />
       </FormLabel>
-      <FormLabel text="Unit number"><input type="text" className="w-full p-2.5 border rounded-lg" value={state.unitNumber} onChange={e => updateField('unitNumber', e.target.value)} /><p className="text-xs text-gray-500 mt-1">This data is for internal use only. We won't display it to consumers.</p></FormLabel>
-      <FormLabel text="No of parking spaces"><input type="number" className="w-full p-2.5 border rounded-lg" value={state.parkingSlots} onChange={e => updateField('parkingSlots', e.target.value)} /></FormLabel>
+      <FormLabel text="Unit number"><input type="text" className="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500" value={state.unitNumber} onChange={e => updateField('unitNumber', e.target.value)} /><p className="text-xs text-gray-500 mt-1">This data is for internal use only. We won't display it to consumers.</p></FormLabel>
+      <FormLabel text="No of parking spaces"><input type="number" className="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500" value={state.parkingSlots} onChange={e => updateField('parkingSlots', e.target.value)} /></FormLabel>
       <FormLabel text="Furnishing type" required><SegmentedControl options={[
         {label: 'Unfurnished', value: 'unfurnished'}, 
         {label: 'Semi furnished', value: 'semi-furnished'}, 
@@ -62,7 +62,7 @@ const SpecificationsForm = ({ state, dispatch, onComplete }: FormProps) => {
       <FormLabel text="Property age">
         <input 
           type="number" 
-          className="w-full p-2.5 border rounded-lg" 
+          className="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500" 
           value={state.age} 
           onChange={e => updateField('age', e.target.value)} 
         />
@@ -70,7 +70,7 @@ const SpecificationsForm = ({ state, dispatch, onComplete }: FormProps) => {
       <FormLabel text="Number of floors">
         <input 
           type="number" 
-          className="w-full p-2.5 border rounded-lg" 
+          className="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500" 
           value={state.numberOfFloors || ''} 
           onChange={e => updateField('numberOfFloors', e.target.value)} 
         />
@@ -79,7 +79,7 @@ const SpecificationsForm = ({ state, dispatch, onComplete }: FormProps) => {
         {value:'resale-ready', label:'Resale - Ready to move'}, 
         {value:'resale-off-plan', label:'Resale - Off-plan'}
       ]} value={state.projectStatus ? { value: state.projectStatus, label: state.projectStatus === 'resale-ready' ? 'Resale - Ready to move' : 'Resale - Off-plan' } : null} onChange={(val) => updateField('projectStatus', val ? val.value as string : '')}/></FormLabel>
-      <FormLabel text="Owner Name"><input type="text" className="w-full p-2.5 border rounded-lg" value={state.ownerName} onChange={e => updateField('ownerName', e.target.value)} /></FormLabel>
+      <FormLabel text="Owner Name"><input type="text" className="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500" value={state.ownerName} onChange={e => updateField('ownerName', e.target.value)} /></FormLabel>
     </div>
   );
 };

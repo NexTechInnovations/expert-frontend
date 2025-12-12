@@ -1,9 +1,8 @@
 import { Check } from 'lucide-react';
 import { useState } from 'react';
-import GoogleIcon from './GoogleIcon';
 
 interface EmailStepProps {
-  onNext: (email: string) => void;
+    onNext: (email: string) => void;
 }
 
 const EmailStep = ({ onNext }: EmailStepProps) => {
@@ -38,15 +37,7 @@ const EmailStep = ({ onNext }: EmailStepProps) => {
                     Next
                 </button>
             </form>
-            <div className="relative flex items-center">
-                <div className="flex-grow border-t border-gray-200"></div>
-                <span className="flex-shrink mx-4 text-sm text-gray-400">or</span>
-                <div className="flex-grow border-t border-gray-200"></div>
-            </div>
-            <button className="w-full bg-gray-100 text-gray-700 font-semibold py-3 rounded-lg flex items-center justify-center gap-3 hover:bg-gray-200">
-                <GoogleIcon />
-                Log in using Google Account
-            </button>
+
         </div>
     );
 };

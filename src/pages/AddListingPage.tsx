@@ -18,13 +18,13 @@ import { useAuth } from '../context/AuthContext';
 
 const initialState: ListingState = {
   uae_emirate: '', permitType: null, reraPermitNumber: '', dtcmPermitNumber: '',
-  category: null, offeringType: null, rentalPeriod: null, propertyType: '', 
-  propertyLocation: null, assignedAgent: null, reference: '', 
-  available: 'immediately', availableDate: null, size: '', bedrooms: '', 
-  bathrooms: '', developer: '', unitNumber: '', parkingSlots: '', 
+  category: null, offeringType: null, rentalPeriod: null, propertyType: '',
+  propertyLocation: null, assignedAgent: null, reference: '',
+  available: 'immediately', availableDate: null, size: '', bedrooms: '',
+  bathrooms: '', developer: '', unitNumber: '', parkingSlots: '',
   furnishingType: null, age: '', numberOfFloors: '', projectStatus: '', ownerName: '',
   price: '', downPayment: '', numberOfCheques: '', amenities: [], title: '', description: '',
-  images: []
+  images: [], latitude: null, longitude: null, googleAddress: '', googleAddressComponents: null
 };
 
 function listingReducer(state: ListingState, action: ListingAction): ListingState {
@@ -35,9 +35,9 @@ function listingReducer(state: ListingState, action: ListingAction): ListingStat
       return { ...state, images: action.value };
     case 'RESET_PERMIT':
       return {
-        ...state, 
-        permitType: null, 
-        reraPermitNumber: '', 
+        ...state,
+        permitType: null,
+        reraPermitNumber: '',
         dtcmPermitNumber: '',
         category: null,
         offeringType: null,
@@ -70,8 +70,8 @@ function listingReducer(state: ListingState, action: ListingAction): ListingStat
         availableDate: state.availableDate
       };
     case 'RESET_REQUIREMENTS': {
-        const { uae_emirate, permitType, reraPermitNumber, dtcmPermitNumber } = state;
-        return { ...initialState, uae_emirate, permitType, reraPermitNumber, dtcmPermitNumber };
+      const { uae_emirate, permitType, reraPermitNumber, dtcmPermitNumber } = state;
+      return { ...initialState, uae_emirate, permitType, reraPermitNumber, dtcmPermitNumber };
     }
     default:
       return state;
@@ -88,7 +88,7 @@ const AddListingPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [agents, setAgents] = useState<SelectOption[]>([]);
   const [loadingLookups, setLoadingLookups] = useState(true);
 
@@ -97,14 +97,19 @@ const AddListingPage = () => {
   useEffect(() => {
     if (isAuthLoading || !token) return;
     const fetchLookups = async () => {
-        setLoadingLookups(true);
-        try {
-            const agentsRes = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/users?role=3`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            setAgents(agentsRes.data.map((u: { id: number; first_name: string; last_name: string }) => ({ value: u.id, label: `${u.first_name} ${u.last_name}` })));
-        } catch (error) { console.error("Failed to fetch lookups", error); } 
-        finally { setLoadingLookups(false); }
+      setLoadingLookups(true);
+      try {
+        const agentsRes = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/users?role=3`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setAgents(agentsRes.data.map((u: { id: number; first_name: string; last_name: string }) => ({ value: u.id, label: `${u.first_name} ${u.last_name}` })));
+      } catch (error) {
+        console.error("Failed to fetch lookups", error);
+        if (axios.isAxiosError(error)) {
+          console.error("Axios Error Details:", error.response?.data, error.response?.status);
+        }
+      }
+      finally { setLoadingLookups(false); }
     };
     fetchLookups();
   }, [isAuthLoading, token]);
@@ -113,63 +118,74 @@ const AddListingPage = () => {
   useEffect(() => {
     if (!token) return;
     const calculateScore = async () => {
-        const payload = {
-            title: { en: debouncedFormData.title },
-            description: { en: debouncedFormData.description },
-            location: debouncedFormData.propertyLocation ? { id: (debouncedFormData.propertyLocation as SelectOption).value } : undefined,
-            assigned_to: debouncedFormData.assignedAgent ? { id: (debouncedFormData.assignedAgent as SelectOption).value } : undefined,
-            price: { type: debouncedFormData.offeringType, amounts: { [debouncedFormData.offeringType!]: Number(debouncedFormData.price) } },
-            category: debouncedFormData.category,
-            type: debouncedFormData.propertyType,
-            bedrooms: debouncedFormData.bedrooms,
-            bathrooms: debouncedFormData.bathrooms,
-            size: Number(debouncedFormData.size),
-            amenities: debouncedFormData.amenities,
-            media: { images: debouncedFormData.images.map(() => ({})) }
-        };
-        try {
-            const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/listings/listings/quality-score`, payload, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            setQualityScore(response.data.value || 0);
-        } catch (error) {
-            console.error("Failed to calculate quality score", error);
-            setQualityScore(0);
-        }
+      const payload = {
+        title: { en: debouncedFormData.title },
+        description: { en: debouncedFormData.description },
+        location: debouncedFormData.propertyLocation
+          ? { id: (debouncedFormData.propertyLocation as SelectOption).value }
+          : (debouncedFormData.googleAddress ? { name_en: debouncedFormData.googleAddress } : undefined),
+        assigned_to: debouncedFormData.assignedAgent ? { id: (debouncedFormData.assignedAgent as SelectOption).value } : undefined,
+        price: { type: debouncedFormData.offeringType, amounts: { [debouncedFormData.offeringType!]: Number(debouncedFormData.price) } },
+        category: debouncedFormData.category,
+        type: debouncedFormData.propertyType,
+        bedrooms: debouncedFormData.bedrooms,
+        bathrooms: debouncedFormData.bathrooms,
+        size: Number(debouncedFormData.size),
+        amenities: debouncedFormData.amenities,
+        media: { images: debouncedFormData.images.map(() => ({})) }
+      };
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/listings/listings/quality-score`, payload, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setQualityScore(response.data.value || 0);
+      } catch (error) {
+        console.error("Failed to calculate quality score", error);
+        setQualityScore(0);
+      }
     };
     calculateScore();
   }, [debouncedFormData, token]);
 
   const handlePublish = async () => {
     if (!completedSteps.includes('core')) {
-        setError("Please complete the 'Core details' section first.");
-        return;
+      setError("Please complete the 'Core details' section first.");
+      return;
     }
 
     if (!token) {
-        setError("Authentication required. Please log in again.");
-        return;
+      setError("Authentication required. Please log in again.");
+      return;
     }
-      
+
     setIsSubmitting(true);
     setError(null);
     setShowSuccess(false);
 
     console.log('Developer value:', formData.developer, 'Type:', typeof formData.developer);
-    
+
     const listingData = {
       assigned_to: { id: (formData.assignedAgent as SelectOption).value },
-      available_from: formData.available === 'immediately' ? new Date().toISOString() : formData.availableDate?.toISOString(),
+      available_from: formData.available === 'immediately'
+        ? new Date().toISOString()
+        : (formData.availableDate
+          ? new Date(Date.UTC(formData.availableDate.getFullYear(), formData.availableDate.getMonth(), formData.availableDate.getDate())).toISOString()
+          : undefined),
       price: {
-          type: formData.offeringType,
-          amounts: { [formData.offeringType!]: Number(formData.price) },
-          downpayment: formData.offeringType === 'sale' && formData.downPayment ? Number(formData.downPayment) : undefined,
-          number_of_cheques: formData.offeringType === 'rent' && formData.numberOfCheques ? Number(formData.numberOfCheques) : undefined
+        type: formData.offeringType,
+        amounts: { [formData.offeringType!]: Number(formData.price) },
+        downpayment: formData.offeringType === 'sale' && formData.downPayment ? Number(formData.downPayment) : undefined,
+        number_of_cheques: formData.offeringType === 'rent' && formData.numberOfCheques ? Number(formData.numberOfCheques) : undefined
       },
       uae_emirate: formData.uae_emirate,
       title: { en: formData.title },
       description: { en: formData.description },
-      location: { id: (formData.propertyLocation as SelectOption).value },
+      location: formData.propertyLocation
+        ? { id: (formData.propertyLocation as SelectOption).value }
+        : {
+          name_en: formData.googleAddress,
+          coordinates: (formData.latitude && formData.longitude) ? { lat: formData.latitude, lng: formData.longitude } : null
+        },
       compliance: { user_confirmed_data_is_correct: true },
       category: formData.category,
       amenities: formData.amenities,
@@ -196,30 +212,30 @@ const AddListingPage = () => {
     });
 
     try {
-        await axios.post(`${import.meta.env.VITE_BASE_URL}/api/listings/listings`, apiPayload, {
-            headers: { 
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        setShowSuccess(true);
-        setTimeout(() => navigate('/listings-management'), 3000);
-         } catch (err: unknown) {
-         const errorMsg = err instanceof Error ? err.message : "Error: Could not publish listing.";
-         setError(errorMsg);
-     } finally {
-        setIsSubmitting(false);
+      await axios.post(`${import.meta.env.VITE_BASE_URL}/api/listings/listings`, apiPayload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      setShowSuccess(true);
+      setTimeout(() => navigate('/listings-management'), 3000);
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Error: Could not publish listing.";
+      setError(errorMsg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
+
   const handleStepComplete = (stepId: string) => {
-      if (!completedSteps.includes(stepId)) {
-          setCompletedSteps(prev => [...prev, stepId]);
-      }
+    if (!completedSteps.includes(stepId)) {
+      setCompletedSteps(prev => [...prev, stepId]);
+    }
   };
-  
+
   const handleSetImages = (files: File[]) => {
-      dispatch({ type: 'SET_IMAGES', value: files });
+    dispatch({ type: 'SET_IMAGES', value: files });
   };
 
   const sections = [
@@ -247,12 +263,12 @@ const AddListingPage = () => {
           <div className="space-y-4">
             <h1 className="text-2xl font-bold text-gray-800">Add a listing</h1>
             {sections.map(section => (
-              <AccordionSection 
+              <AccordionSection
                 key={section.id}
                 title={section.title}
                 isCompleted={completedSteps.includes(section.id)}
                 isLocked={section.id !== 'core' && !completedSteps.includes('core')}
-                isOpen={activeSection === section.id} 
+                isOpen={activeSection === section.id}
                 onToggle={() => handleToggle(section.id)}
               >
                 {section.component}
@@ -260,9 +276,9 @@ const AddListingPage = () => {
             ))}
           </div>
           <div className="hidden lg:block">
-              <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-thin">
-                   <ListingPreview state={formData} images={formData.images} />
-              </div>
+            <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-thin">
+              <ListingPreview state={formData} images={formData.images} />
+            </div>
           </div>
         </div>
       </div>

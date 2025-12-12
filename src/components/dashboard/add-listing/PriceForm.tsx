@@ -29,11 +29,11 @@ const PriceForm = ({ state, dispatch, onComplete }: FormProps) => {
     <div className="space-y-6">
       <FormLabel text="Property price" required>
         <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium">AED</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-700">AED</span>
             <input 
               type="number" 
               placeholder="Enter amount" 
-              className="w-full p-2.5 pl-12 border rounded-lg" 
+              className="w-full p-2.5 pl-12 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500" 
               value={state.price} 
               onChange={e => updateField('price', e.target.value)} 
             />
@@ -43,11 +43,11 @@ const PriceForm = ({ state, dispatch, onComplete }: FormProps) => {
       {state.offeringType === 'sale' && (
         <FormLabel text="Down payment">
             <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium">AED</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-700">AED</span>
                 <input 
                   type="number" 
                   placeholder="Enter amount" 
-                  className="w-full p-2.5 pl-12 border rounded-lg" 
+                  className="w-full p-2.5 pl-12 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500" 
                   value={state.downPayment} 
                   onChange={e => updateField('downPayment', e.target.value)} 
                 />

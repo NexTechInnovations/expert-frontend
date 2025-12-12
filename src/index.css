@@ -137,14 +137,36 @@ html {
 /* Custom Day Picker Styles */
 .rdp {
   --rdp-cell-size: 40px;
-  --rdp-accent-color: #4f46e5;
-  --rdp-background-color: #e0e7ff;
-  --rdp-accent-color-dark: #312e81;
-  --rdp-background-color-dark: #c7d2fe;
+  --rdp-accent-color: #8b5cf6;
+  --rdp-background-color: #f3e8ff;
+  --rdp-accent-color-dark: #7c3aed;
+  --rdp-background-color-dark: #ddd6fe;
+  margin: 0;
 }
-.rdp-day_range_start, .rdp-day_range_end {
+
+.rdp-months {
+  background: white;
+}
+
+.rdp-day_selected, 
+.rdp-day_selected:hover {
   background-color: var(--rdp-accent-color) !important;
   color: white !important;
+  font-weight: 600;
+}
+
+.rdp-day:hover:not(.rdp-day_selected) {
+  background-color: #f3f4f6 !important;
+  color: #1f2937;
+}
+
+.rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+  background-color: #f3f4f6;
+}
+
+.rdp-day_today {
+  font-weight: 700;
+  color: var(--rdp-accent-color);
 }
 /* a {
   font-weight: 500;

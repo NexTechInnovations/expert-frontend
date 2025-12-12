@@ -61,6 +61,10 @@ export interface ListingState {
   title: string;
   description: string;
   images: File[]; // تم تعديل هنا
+  latitude?: number | null;
+  longitude?: number | null;
+  googleAddress?: string | null;
+  googleAddressComponents?: any; // or specific type
 }
 
 export type ListingAction =

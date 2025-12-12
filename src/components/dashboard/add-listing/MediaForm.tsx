@@ -70,8 +70,8 @@ const MediaForm = ({ images, onSetImages }: MediaFormProps) => {
                     ))}
                 </div>
             </FormLabel>
-            <FormLabel text="360 URL link"><input type="text" className="w-full p-2.5 border rounded-lg" /></FormLabel>
-            <FormLabel text="Video tour URL"><input type="text" className="w-full p-2.5 border rounded-lg" /></FormLabel>
+            <FormLabel text="360 URL link"><input type="text" className="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500" placeholder="Enter 360 view URL" /></FormLabel>
+            <FormLabel text="Video tour URL"><input type="text" className="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500" placeholder="Enter video tour URL" /></FormLabel>
         </div>
     );
 };

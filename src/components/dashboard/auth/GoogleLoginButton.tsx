@@ -1,0 +1,44 @@
+import { useGoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
+
+const GoogleLoginButton = () => {
+    const loginGoogle = useGoogleLogin({
+        flow: 'auth-code',
+        onSuccess: async (codeResponse) => {
+            try {
+                // Send code to backend
+                const { data } = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/auth/google`, {
+                    code: codeResponse.code,
+                });
+
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/dashboard';
+                }
+            } catch (error) {
+                console.error('Google Login Failed', error);
+                alert('Google Login Failed');
+            }
+        },
+        onError: () => {
+            console.log('Login Failed');
+        },
+    });
+
+    return (
+        <button
+            type="button"
+            onClick={() => loginGoogle()}
+            className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mt-4"
+        >
+            <img
+                className="h-5 w-5 mr-2"
+                src="https://www.svgrepo.com/show/475656/google-color.svg"
+                alt="Google logo"
+            />
+            Continue with Google
+        </button>
+    );
+};
+
+export default GoogleLoginButton;
