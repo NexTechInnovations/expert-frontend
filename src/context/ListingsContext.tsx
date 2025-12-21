@@ -15,7 +15,9 @@ export interface Listing {
     updated_at: string;
     assigned_to: { name: string };
     location: { id: number; name?: string };
-    images?: string[]; // Add support for property images
+    media?: {
+        images?: Array<{ original: { url: string } }>;
+    };
 }
 
 export interface Pagination {
@@ -60,7 +62,7 @@ export const ListingsProvider = ({ children }: { children: React.ReactNode }) =>
         setError(null);
         try {
             const params = new URLSearchParams();
-            
+
             Object.keys(filters).forEach(key => {
                 if (filters[key]) params.append(key, String(filters[key]));
             });
@@ -70,10 +72,10 @@ export const ListingsProvider = ({ children }: { children: React.ReactNode }) =>
             }
 
             params.append('page', page.toString());
-            
+
             const listingsResponse = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/listings/listings?${params.toString()}`);
             const { results, pagination: newPagination } = listingsResponse.data;
-            
+
             if (results && results.length > 0) {
                 const listingIds = results.map((l: Listing) => l.id).join(',');
                 const attributesResponse = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/listings/listings/listing-attributes?ids=${listingIds}`);
@@ -90,7 +92,7 @@ export const ListingsProvider = ({ children }: { children: React.ReactNode }) =>
             } else {
                 setListings([]);
             }
-            
+
             setPagination(newPagination);
 
         } catch (err: unknown) {
@@ -164,11 +166,11 @@ export const ListingsProvider = ({ children }: { children: React.ReactNode }) =>
     }, []);
 
     return (
-        <ListingsContext.Provider value={{ 
-            listings, 
-            pagination, 
-            loading, 
-            error, 
+        <ListingsContext.Provider value={{
+            listings,
+            pagination,
+            loading,
+            error,
             fetchListings,
             showErrorToast,
             setShowErrorToast,
@@ -181,10 +183,10 @@ export const ListingsProvider = ({ children }: { children: React.ReactNode }) =>
         }}>
             {children}
             {showErrorToast && error && (
-                <ErrorToast 
+                <ErrorToast
                     show={showErrorToast}
-                    message={error} 
-                    onClose={() => setShowErrorToast(false)} 
+                    message={error}
+                    onClose={() => setShowErrorToast(false)}
                 />
             )}
         </ListingsContext.Provider>

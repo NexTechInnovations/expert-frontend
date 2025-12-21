@@ -122,7 +122,7 @@ const AddListingPage = () => {
         title: { en: debouncedFormData.title },
         description: { en: debouncedFormData.description },
         location: debouncedFormData.propertyLocation
-          ? { id: (debouncedFormData.propertyLocation as SelectOption).value }
+          ? { id: String((debouncedFormData.propertyLocation as SelectOption).value) }
           : (debouncedFormData.googleAddress ? { name_en: debouncedFormData.googleAddress } : undefined),
         assigned_to: debouncedFormData.assignedAgent ? { id: (debouncedFormData.assignedAgent as SelectOption).value } : undefined,
         price: { type: debouncedFormData.offeringType, amounts: { [debouncedFormData.offeringType!]: Number(debouncedFormData.price) } },
@@ -181,7 +181,7 @@ const AddListingPage = () => {
       title: { en: formData.title },
       description: { en: formData.description },
       location: formData.propertyLocation
-        ? { id: (formData.propertyLocation as SelectOption).value }
+        ? { id: String((formData.propertyLocation as SelectOption).value) }
         : {
           name_en: formData.googleAddress,
           coordinates: (formData.latitude && formData.longitude) ? { lat: formData.latitude, lng: formData.longitude } : null

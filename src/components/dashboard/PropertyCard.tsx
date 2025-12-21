@@ -1,4 +1,5 @@
-import {  MapPin, BedDouble, Ruler, Wallet, User, FileText, CalendarClock } from 'lucide-react';
+import React from 'react';
+import { MapPin, BedDouble, Ruler, Wallet, User, FileText, CalendarClock } from 'lucide-react';
 import type { Listing } from '../../context/ListingsContext';
 import { formatRelativeTime } from '../../utils/formatDate';
 import ActionMenu from '../ui/ActionMenu';
@@ -22,19 +23,42 @@ const PlaceholderImage = () => (
 );
 
 const PropertyCard = ({ listing, onActionComplete }: PropertyCardProps) => {
+    const [imageError, setImageError] = React.useState(false);
     const priceValue = listing.price?.amounts?.[listing.price.type];
     const priceText = priceValue ? priceValue.toLocaleString() : 'POA';
 
+    const getImageUrl = (path: string) => {
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        const baseUrl = import.meta.env.VITE_BASE_URL || '';
+        const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+        const cleanBase = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+        return `${cleanBase}/${cleanPath}`;
+    };
+
+    const firstImage = listing.media?.images?.[0];
+    const rawImagePath = firstImage?.original?.url;
+    const imageUrl = rawImagePath ? getImageUrl(rawImagePath) : null;
+
     return (
         <div className="bg-white border border-gray-200/80 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
-            <div className="relative h-40 bg-gray-200 flex items-center justify-center">
-                <PlaceholderImage />
+            <div className="relative h-40 bg-gray-200 flex items-center justify-center overflow-hidden">
+                {!imageError && imageUrl ? (
+                    <img
+                        src={imageUrl}
+                        alt={`Property ${listing.reference}`}
+                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                        onError={() => setImageError(true)}
+                    />
+                ) : (
+                    <PlaceholderImage />
+                )}
                 <div className="absolute top-2 right-2">
-                   <ActionMenu 
-                       listingId={listing.id} 
-                       onActionComplete={onActionComplete} 
-                       listingData={listing}
-                   />
+                    <ActionMenu
+                        listingId={listing.id}
+                        onActionComplete={onActionComplete}
+                        listingData={listing}
+                    />
                 </div>
             </div>
             <div className="p-4 flex flex-col flex-grow">
@@ -51,7 +75,7 @@ const PropertyCard = ({ listing, onActionComplete }: PropertyCardProps) => {
                     <span className="col-span-1 capitalize">{priceText !== 'POA' && (listing.price?.type === 'rent' ? 'Yearly' : listing.price?.type)}</span>
                 </div>
                 <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200">
-                     <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 flex-shrink-0">
                         <User size={18} />
                     </div>
                     <div className="flex-grow overflow-hidden">
@@ -67,7 +91,7 @@ const PropertyCard = ({ listing, onActionComplete }: PropertyCardProps) => {
                 </div>
             </div>
             <div className="border-t border-gray-200/80 px-4 py-3 flex items-center justify-center">
-                 <QualityScoreProgressCircle score={listing.quality_score?.value || 0} />
+                <QualityScoreProgressCircle score={listing.quality_score?.value || 0} />
             </div>
         </div>
     );
