@@ -38,14 +38,14 @@ const PasswordStep = ({ email, onBack }: PasswordStepProps) => {
             <form onSubmit={handleLogin} className="space-y-6">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" value={email} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500" readOnly />
+                    <input type="email" id='email' value={email} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500" readOnly />
                 </div>
                 <div>
                     <div className="flex justify-between items-center mb-1">
                          <label className="block text-sm font-medium text-gray-700">Password</label>
                          <a href="#" className="text-sm text-violet-600 hover:underline">Forgot Password</a>
                     </div>
-                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" required />
+                    <input type="password" id='password' value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" required />
                 </div>
                 
                 {error && <p className="text-red-500 text-sm">{error}</p>}
