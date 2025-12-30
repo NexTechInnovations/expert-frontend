@@ -38,7 +38,25 @@ const RolesAndPermissions = () => {
             setError(null);
             try {
                 const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/permissions-matrix`);
-                const { roles, permissions, rolePermissions } = response.data;
+                let { roles, permissions, rolePermissions } = response.data;
+
+                const roleOrder = [
+                    'decision_maker',
+                    'advisor',
+                    'admin',
+                    'basic_admin',
+                    'agent',
+                    'finance',
+                    'limited_access_user'
+                ];
+
+                roles = [...roles].sort((a, b) => {
+                    const indexA = roleOrder.indexOf(a.roleKey || '');
+                    const indexB = roleOrder.indexOf(b.roleKey || '');
+                    if (indexA === -1) return 1;
+                    if (indexB === -1) return -1;
+                    return indexA - indexB;
+                });
 
 
                 const permissionSet = new Set<string>(
@@ -82,11 +100,11 @@ const RolesAndPermissions = () => {
         if (!matrixData) {
             return <div className="text-center mt-16 text-gray-500">No data available.</div>;
         }
-        return <PermissionsTable 
-                    roles={matrixData.roles} 
-                    groupedPermissions={matrixData.groupedPermissions} 
-                    permissionSet={matrixData.permissionSet} 
-                />;
+        return <PermissionsTable
+            roles={matrixData.roles}
+            groupedPermissions={matrixData.groupedPermissions}
+            permissionSet={matrixData.permissionSet}
+        />;
     };
 
     return (
@@ -102,14 +120,14 @@ const RolesAndPermissions = () => {
                         </button>
                     </Link>
                 </div>
-                 <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600">
                     Permissions available for default roles. <a href="#" className="text-violet-600 underline">Create a custom role</a> to upgrade the capabilities of a default role. <a href="#" className="text-violet-600 underline">Learn more</a>
                 </p>
             </div>
 
             {/* Content Section */}
             <div className="px-4 sm:px-6 md:px-8 flex-grow overflow-y-auto pb-4">
-                 {renderContent()}
+                {renderContent()}
             </div>
         </div>
     );

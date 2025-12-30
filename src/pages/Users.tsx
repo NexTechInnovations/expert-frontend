@@ -11,23 +11,23 @@ import LoadingSpinner from '../components/ui/LoadingSpinner'; // <-- استير�
 import NoResultsFound from '../components/ui/NoResultsFound'; // <-- استيراد
 
 export interface Role {
-  id: number;
-  name: string;
+    id: number;
+    name: string;
 }
 
 export interface User {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  mobile: string;
-  status: 'active' | 'inactive';
-  role: Role;
-  agent: {
-    verification: {
-      status: string;
+    id: number;
+    email: string;
+    first_name: string;
+    last_name: string;
+    mobile: string;
+    status: 'active' | 'inactive';
+    role: Role;
+    agent: {
+        verification: {
+            status: string;
+        };
     };
-  };
 }
 
 const Users = () => {
@@ -64,9 +64,28 @@ const Users = () => {
                     axios.get(`${import.meta.env.VITE_BASE_URL}/api/users`),
                     axios.get(`${import.meta.env.VITE_BASE_URL}/api/roles`)
                 ]);
+
+                const roleOrder = [
+                    'decision_maker',
+                    'advisor',
+                    'admin',
+                    'basic_admin',
+                    'agent',
+                    'finance',
+                    'limited_access_user'
+                ];
+
+                const sortedRoles = [...rolesResponse.data].sort((a, b) => {
+                    const indexA = roleOrder.indexOf(a.roleKey || '');
+                    const indexB = roleOrder.indexOf(b.roleKey || '');
+                    if (indexA === -1) return 1;
+                    if (indexB === -1) return -1;
+                    return indexA - indexB;
+                });
+
                 setUsers(usersResponse.data);
-                setRoles(rolesResponse.data);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                setRoles(sortedRoles);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 if (err.response?.status === 401) {
                     setError('Authorization failed. Please try logging in again.');
@@ -84,7 +103,7 @@ const Users = () => {
         return () => {
             effectRan.current = true;
         };
-    }, [isAuthLoading]); 
+    }, [isAuthLoading]);
 
     useEffect(() => {
         if (isInitialMount.current) {
@@ -100,7 +119,7 @@ const Users = () => {
                 if (debouncedSearchQuery) params.append('query', debouncedSearchQuery);
                 if (selectedRole) params.append('role', selectedRole.value.toString());
                 if (selectedStatus) params.append('status', selectedStatus.value.toString());
-                    console.log("params" , params)
+                console.log("params", params)
                 const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/users?${params.toString()}`);
                 setUsers(response.data);
             } catch (err) {
@@ -123,17 +142,17 @@ const Users = () => {
             if (selectedStatus) params.append('status', selectedStatus.value.toString());
             const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/users?${params.toString()}`);
             setUsers(response.data);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             setError('Could not refresh users.');
         } finally {
             setLoading(false);
         }
     };
-    
-    const roleOptions = useMemo(() => 
+
+    const roleOptions = useMemo(() =>
         roles.map(role => ({ value: role.id.toString(), label: role.name })),
-    [roles]);
+        [roles]);
 
     const statusOptions = [
         { value: 'active', label: 'Active' },
@@ -153,10 +172,10 @@ const Users = () => {
         return (
             <>
                 <div className="hidden lg:block">
-                   <UsersTable users={users} refreshUsers={handleRefresh} />
+                    <UsersTable users={users} refreshUsers={handleRefresh} />
                 </div>
                 <div className="block lg:hidden space-y-4">
-                   {users.map(user => <UserCard key={user.id} user={user} refreshUsers={handleRefresh} />)}
+                    {users.map(user => <UserCard key={user.id} user={user} refreshUsers={handleRefresh} />)}
                 </div>
             </>
         );
@@ -175,7 +194,7 @@ const Users = () => {
                         </Link>
                     </div>
                 </div>
-                
+
                 <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:justify-between">
                     <div className="relative w-full lg:max-w-xs">
                         <input type="text" placeholder="Search by Name, Email, Mobile" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white pl-4 pr-10 py-2.5 border rounded-lg text-sm" />

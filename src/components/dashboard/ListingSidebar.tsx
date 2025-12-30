@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Calendar, Clock } from 'lucide-react';
+import { X, User, Calendar, Clock, StickyNote } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import type { Listing } from '../../context/ListingsContext';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import ListingInsights from './ListingInsights';
 
 interface ListingSidebarProps {
     listingId: string | null;
@@ -16,12 +18,63 @@ const ListingSidebar = ({ listingId, onClose }: ListingSidebarProps) => {
     const [listing, setListing] = useState<Listing | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
+
+    // Notes State
+    const [isAddingNote, setIsAddingNote] = useState(false);
+    const [noteContent, setNoteContent] = useState('');
+    const [notes, setNotes] = useState<any[]>([]);
+    const [notesLoading, setNotesLoading] = useState(false);
+    const [notesError, setNotesError] = useState<string | null>(null);
+    const MAX_NOTE_CHARS = 1000;
+
+    const fetchNotes = async () => {
+        if (!listingId || !token) return;
+        setNotesLoading(true);
+        setNotesError(null);
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/listings/listings/${listingId}/notes`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setNotes(response.data);
+        } catch (err) {
+            console.error('Failed to fetch notes:', err);
+            setNotesError('Failed to load notes');
+        } finally {
+            setNotesLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'notes' && listingId) {
+            fetchNotes(); // Fetch when tab becomes active
+        }
+    }, [activeTab, listingId]);
+
+    const handleSaveNote = async () => {
+        if (!listingId || !token) return;
+        try {
+            await axios.post(`${import.meta.env.VITE_BASE_URL}/api/listings/listings/${listingId}/notes`,
+                { text: noteContent },
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            );
+            setNoteContent('');
+            setIsAddingNote(false);
+            fetchNotes(); // Re-fetch notes after adding
+        } catch (err) {
+            console.error('Failed to save note:', err);
+            // Optionally show error toast
+        }
+    };
 
     useEffect(() => {
         if (!listingId || !token) {
             setListing(null);
             return;
         }
+
+        // Reset tab to overview when opening new listing
+        setActiveTab('overview');
 
         const fetchListingDetails = async () => {
             setLoading(true);
@@ -54,9 +107,9 @@ const ListingSidebar = ({ listingId, onClose }: ListingSidebarProps) => {
 
             {/* Sidebar */}
             <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${listingId ? 'translate-x-0' : 'translate-x-full'}`}>
-                <div className="flex flex-col h-full">
+                <div className="flex flex-col h-full relative">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-4 border-b">
+                    <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
                         <h2 className="text-lg font-bold text-gray-900">
                             Listing Performance
                         </h2>
@@ -69,12 +122,30 @@ const ListingSidebar = ({ listingId, onClose }: ListingSidebarProps) => {
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex border-b">
+                    <div className="flex border-b flex-shrink-0">
                         <button
                             onClick={() => setActiveTab('overview')}
                             className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'overview' ? 'border-violet-600 text-violet-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                         >
                             Overview
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('insights')}
+                            className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'insights' ? 'border-violet-600 text-violet-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Insights
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('leads')}
+                            className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'leads' ? 'border-violet-600 text-violet-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Leads
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('notes')}
+                            className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'notes' ? 'border-violet-600 text-violet-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Notes
                         </button>
                         <button
                             disabled
@@ -85,7 +156,7 @@ const ListingSidebar = ({ listingId, onClose }: ListingSidebarProps) => {
                     </div>
 
                     {/* Content */}
-                    <div className="flex-grow overflow-y-auto p-6">
+                    <div className="flex-grow overflow-y-auto p-6 pb-24">
                         {loading ? (
                             <div className="flex justify-center items-center h-32">
                                 <LoadingSpinner />
@@ -117,9 +188,116 @@ const ListingSidebar = ({ listingId, onClose }: ListingSidebarProps) => {
                                         </div>
                                     </div>
                                 )}
+                                {activeTab === 'insights' && (
+                                    <ListingInsights qualityScore={listing.quality_score} />
+                                )}
+                                {activeTab === 'leads' && (
+                                    <div className="flex flex-col items-center justify-center py-10 text-center text-gray-500">
+                                        <div className="bg-gray-50 p-4 rounded-full mb-4">
+                                            <User size={24} className="text-gray-400" />
+                                        </div>
+                                        <p>No leads found for this listing.</p>
+                                    </div>
+                                )}
+                                {activeTab === 'notes' && (
+                                    <div className="flex flex-col space-y-6">
+                                        <button
+                                            onClick={() => setIsAddingNote(true)}
+                                            className="w-full py-2.5 bg-white border border-violet-500 rounded-lg text-sm font-bold text-violet-700 hover:bg-violet-50 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            + Add a Note
+                                        </button>
+
+                                        {isAddingNote && (
+                                            <div className="bg-white border rounded-xl shadow-sm p-4 space-y-3">
+                                                <div className="relative">
+                                                    <textarea
+                                                        value={noteContent}
+                                                        onChange={(e) => setNoteContent(e.target.value)}
+                                                        maxLength={MAX_NOTE_CHARS}
+                                                        placeholder="Put your listing notes here"
+                                                        className="w-full h-24 p-0 border-none resize-none focus:ring-0 text-sm text-gray-700 placeholder:text-gray-400"
+                                                        autoFocus
+                                                    />
+                                                    <div className="text-right text-xs text-violet-600 font-medium">
+                                                        {noteContent.length}/{MAX_NOTE_CHARS}
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-3 pt-2 border-t">
+                                                    <button
+                                                        onClick={() => {
+                                                            setIsAddingNote(false);
+                                                            setNoteContent('');
+                                                        }}
+                                                        className="flex-1 px-4 py-2 bg-white border border-violet-800 text-violet-800 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        onClick={handleSaveNote}
+                                                        disabled={!noteContent.trim()}
+                                                        className="flex-1 px-4 py-2 bg-violet-600 text-white font-bold rounded-lg cursor-pointer hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-sm"
+                                                    >
+                                                        Save Note
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {notesLoading ? (
+                                            <div className="flex justify-center py-8">
+                                                <LoadingSpinner />
+                                            </div>
+                                        ) : notesError ? (
+                                            <div className="text-center text-red-500 py-4 text-sm">{notesError}</div>
+                                        ) : notes.length > 0 ? (
+                                            <div className="space-y-4">
+                                                {notes.map((note) => (
+                                                    <div key={note.id} className="bg-white border rounded-xl p-4 shadow-sm relative group">
+                                                        <p className="text-gray-800 text-sm font-medium mb-3 leading-relaxed">
+                                                            {note.text}
+                                                        </p>
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <User size={16} className="text-gray-400" />
+                                                                <span className="text-xs text-gray-500 font-medium">
+                                                                    {note.created_by ? `${note.created_by.first_name} ${note.created_by.last_name}` : 'Unknown User'}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-xs text-gray-400">
+                                                                {new Date(note.created_at).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            !isAddingNote && (
+                                                <div className="text-center py-10">
+                                                    <div className="bg-gray-50 p-3 rounded-full inline-flex mb-3">
+                                                        <StickyNote size={20} className="text-gray-400" />
+                                                    </div>
+                                                    <p className="text-gray-500 text-sm">No notes added yet</p>
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ) : null}
                     </div>
+
+                    {/* Footer */}
+                    {listing && (
+                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t flex justify-end">
+                            <button
+                                onClick={() => navigate(`/listings/edit/${listing.id}`)}
+                                className="w-full px-6 py-2.5 bg-white border border-violet-600 text-violet-600 font-bold rounded-lg hover:bg-violet-50 transition-colors"
+                            >
+                                Edit
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

@@ -8,7 +8,7 @@ interface User {
   role: string;
   legacyRole: string;
 }
- interface Role {
+interface Role {
   id: number;
   name: string;
   roleKey: string;
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const effectRan = useRef(false);
 
   const fetchUser = useCallback(async (currentToken: string) => {
@@ -48,15 +48,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       delete axios.defaults.headers.common['Authorization'];
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }, []);
 
-   const fetchRoles = useCallback(async () => {
-    if (roles.length > 0) return; 
+  const fetchRoles = useCallback(async () => {
+    if (roles.length > 0) return;
     try {
       const { data } = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/roles`);
-      setRoles(data);
+
+      // Order requested by user
+      const roleOrder = [
+        'decision_maker',
+        'advisor',
+        'admin',
+        'basic_admin',
+        'agent',
+        'finance',
+        'limited_access_user'
+      ];
+
+      const sortedRoles = [...data].sort((a, b) => {
+        const indexA = roleOrder.indexOf(a.roleKey);
+        const indexB = roleOrder.indexOf(b.roleKey);
+
+        // Handle cases where roleKey might not be in the list (if any new ones are added)
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+
+        return indexA - indexB;
+      });
+
+      setRoles(sortedRoles);
     } catch (error) {
       console.error("Failed to fetch roles", error);
     }
@@ -66,33 +89,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (effectRan.current === true) {
       return;
     }
-    
+
     if (token) {
       fetchUser(token);
-         fetchRoles();
+      fetchRoles();
     } else {
       setIsLoading(false);
     }
-    
+
     return () => {
-        effectRan.current = true;
+      effectRan.current = true;
     }
-  }, [token, fetchUser ,  fetchRoles]);
+  }, [token, fetchUser, fetchRoles]);
 
   const login = async (email: string, password: string) => {
     const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/auth/login`, {
       email,
       password,
     });
-    
+
     const { token: newToken } = response.data;
-    
+
     if (newToken) {
       // الخطوة 1: تخزين التوكن الجديد
       localStorage.setItem('token', newToken);
 
       setToken(newToken);
-      
+
       await fetchUser(newToken);
     }
   };
@@ -103,17 +126,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await axios.post(`${import.meta.env.VITE_BASE_URL}/api/auth/logout`);
       }
     } catch (error) {
-        console.error("Server logout failed, proceeding with client-side cleanup.", error);
+      console.error("Server logout failed, proceeding with client-side cleanup.", error);
     } finally {
-        localStorage.removeItem('token');
-        setToken(null);
-        setUser(null);
-        delete axios.defaults.headers.common['Authorization'];
+      localStorage.removeItem('token');
+      setToken(null);
+      setUser(null);
+      delete axios.defaults.headers.common['Authorization'];
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout , roles  }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout, roles }}>
       {!isLoading && children}
     </AuthContext.Provider>
   );
@@ -128,13 +151,13 @@ export const useAuth = () => {
 };
 
 export const useLogout = () => {
-    const navigate = useNavigate();
-    const { logout: contextLogout } = useAuth();
-    
-    const logoutAndRedirect = async () => {
-        await contextLogout();
-        navigate('/login');
-    };
-    
-    return logoutAndRedirect;
+  const navigate = useNavigate();
+  const { logout: contextLogout } = useAuth();
+
+  const logoutAndRedirect = async () => {
+    await contextLogout();
+    navigate('/login');
+  };
+
+  return logoutAndRedirect;
 }

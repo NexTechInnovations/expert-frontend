@@ -2,6 +2,25 @@ import React, { useState, useCallback, createContext, useContext } from 'react';
 import axios from 'axios';
 import ErrorToast from '../components/ui/ErrorToast';
 
+export interface IQualityScoreDetail {
+    color: string;
+    group?: string;
+    help?: string;
+    help_ar?: string;
+    tag: string;
+    tag_ar?: string;
+    value: number;
+    weight: number;
+}
+
+export interface IQualityScore {
+    color: string;
+    details: {
+        [key: string]: IQualityScoreDetail;
+    };
+    value: number;
+}
+
 export interface Listing {
     id: string;
     reference: string;
@@ -10,7 +29,7 @@ export interface Listing {
     type: string;
     bedrooms: string | null;
     size: number | null;
-    quality_score: { value: number };
+    quality_score: IQualityScore;
     state: { type: string };
     updated_at: string;
     assigned_to: { name: string; id?: string | number };

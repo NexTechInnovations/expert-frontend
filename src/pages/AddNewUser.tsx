@@ -319,7 +319,7 @@ function validateEmail(email: string) {
 
 const AddNewUser = () => {
     const navigate = useNavigate();
-    const { roles } = useAuth(); 
+    const { roles } = useAuth();
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [phoneCode, setPhoneCode] = useState<Option | null>(countryCodes[0]);
@@ -334,19 +334,19 @@ const AddNewUser = () => {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    const roleOptions = useMemo(() => 
-        roles.map(role => ({ value: role.id.toString(), label: role.name })),
-    [roles]);
+    const roleOptions = useMemo(() =>
+        roles.map(role => ({ value: role.id.toString(), label: role.name, key: role.roleKey })),
+        [roles]);
 
-    // التحقق من صحة النموذج - إذا كان role 3، يجب إضافة الجنسية واللغات
-    const isFormValid = firstName && 
-        phoneNumber && 
-        validatePhoneNumber(phoneNumber) && 
-        loginEmail && 
-        validateEmail(loginEmail) && 
-        password && 
+    // التحقق من صحة النموذج - إذا كان role agent، يجب إضافة الجنسية واللغات
+    const isFormValid = firstName &&
+        phoneNumber &&
+        validatePhoneNumber(phoneNumber) &&
+        loginEmail &&
+        validateEmail(loginEmail) &&
+        password &&
         selectedRole &&
-        (selectedRole.value !== '3' || (nationality && selectedLanguages.length > 0));
+        ((selectedRole as any).key !== 'agent' || (nationality && selectedLanguages.length > 0));
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -381,8 +381,8 @@ const AddNewUser = () => {
             password,
         };
 
-        // إضافة الجنسية واللغات إذا كان role 3
-        if (selectedRole.value === '3') {
+        // إضافة الجنسية واللغات إذا كان role agent
+        if ((selectedRole as any).key === 'agent') {
             userData.nationality = nationality?.value as string;
             userData.language = selectedLanguages.map(lang => lang.value as string);
         }
@@ -390,7 +390,7 @@ const AddNewUser = () => {
         try {
             await axios.post(`${import.meta.env.VITE_BASE_URL}/api/users`, userData);
             setSuccess('User created successfully! Redirecting...');
-            
+
             setFirstName('');
             setLastName('');
             setPhoneNumber('');
@@ -401,9 +401,9 @@ const AddNewUser = () => {
             setNationality(null);
             setSelectedLanguages([]);
 
-            setTimeout(() => navigate('/users'), 2000); 
+            setTimeout(() => navigate('/users'), 2000);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || "An unexpected error occurred.";
             setError(errorMessage);
@@ -423,10 +423,10 @@ const AddNewUser = () => {
 
                 <form onSubmit={handleSubmit} className="bg-white border border-gray-200/80 rounded-lg p-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-6">Add a New User</h2>
-                    
+
                     {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">{error}</div>}
                     {success && <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm">{success}</div>}
-                    
+
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                             <FormField label="First Name" required>
@@ -437,7 +437,7 @@ const AddNewUser = () => {
                             </FormField>
                             <FormField label="Mobile Phone" required>
                                 <div className="flex">
-                                    <CustomSelect 
+                                    <CustomSelect
                                         options={countryCodes}
                                         value={phoneCode}
                                         onChange={setPhoneCode}
@@ -456,36 +456,36 @@ const AddNewUser = () => {
                                     <div className="text-red-500 text-sm mt-1">Please enter a valid email with @ and .com</div>
                                 )}
                             </FormField>
-                             <FormField label="Password" required>
+                            <FormField label="Password" required>
                                 <input type="password" placeholder="Set a password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-2.5 border rounded-lg text-sm" />
                             </FormField>
                         </div>
                         <FormField label="Role" required>
                             <CustomSelect options={roleOptions} placeholder="Select a role" value={selectedRole} onChange={setSelectedRole} />
                         </FormField>
-                        
-                        {/* الحقول الإضافية التي تظهر فقط عند اختيار role 3 */}
-                        {selectedRole?.value === '3' && (
+
+                        {/* الحقول الإضافية التي تظهر فقط عند اختيار role agent */}
+                        {(selectedRole as any)?.key === 'agent' && (
                             <>
                                 <FormField label="Nationality" required>
-                                    <CustomSelect 
-                                        options={nationalities} 
-                                        placeholder="Select nationality" 
-                                        value={nationality} 
-                                        onChange={setNationality} 
+                                    <CustomSelect
+                                        options={nationalities}
+                                        placeholder="Select nationality"
+                                        value={nationality}
+                                        onChange={setNationality}
                                     />
                                 </FormField>
                                 <FormField label="Languages" required>
                                     <div className="space-y-2">
-                                        <CustomSelect 
-                                            options={languages} 
-                                            placeholder="Select languages" 
-                                            value={null} 
+                                        <CustomSelect
+                                            options={languages}
+                                            placeholder="Select languages"
+                                            value={null}
                                             onChange={(selected) => {
                                                 if (selected && !selectedLanguages.find(lang => lang.value === selected.value)) {
                                                     setSelectedLanguages(prev => [...prev, selected]);
                                                 }
-                                            }} 
+                                            }}
                                         />
                                         {selectedLanguages.length > 0 && (
                                             <div className="flex flex-wrap gap-2 mt-2">
@@ -508,7 +508,7 @@ const AddNewUser = () => {
                             </>
                         )}
                         <div>
-                            <button 
+                            <button
                                 type="submit"
                                 disabled={!isFormValid || isSubmitting}
                                 className="bg-red-600 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 enabled:hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed"

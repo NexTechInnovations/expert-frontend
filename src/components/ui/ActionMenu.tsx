@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MoreHorizontal, FileText, Trash2, Archive, ThumbsUp, Copy } from 'lucide-react';
 import axios from 'axios';
 import { useConfirmationModal } from '../../hooks/useConfirmationModal';
@@ -7,6 +7,9 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import SuccessToast from './SuccessToast';
 import ErrorToast from './ErrorToast';
+import Tippy from '@tippyjs/react';
+import 'tippy.js/dist/tippy.css';
+import 'tippy.js/themes/light.css';
 
 interface ListingData {
     id: string;
@@ -36,7 +39,7 @@ interface ListingData {
     description?: {
         en?: string;
     };
-    images?: string[]; // Added images property
+    images?: string[];
 }
 
 interface ActionMenuProps {
@@ -51,21 +54,11 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [showErrorToast, setShowErrorToast] = useState(false);
     const [message, setMessage] = useState('');
-    const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
+    const [visible, setVisible] = useState(false); // Tippy visibility state
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
+    // PDF Generation Logic (Kept mostly as is, just function extracted if needed, but keeping inline for simplicity)
     const generatePDF = async () => {
         if (!listingData) {
             console.error('No listing data available for PDF generation');
@@ -74,8 +67,6 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
         setIsGeneratingPdf(true);
         try {
             const doc = new jsPDF();
-
-            // Create a temporary div for rendering images
             const tempDiv = document.createElement('div');
             tempDiv.style.position = 'absolute';
             tempDiv.style.left = '-9999px';
@@ -86,7 +77,6 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
             tempDiv.style.padding = '20px';
             tempDiv.style.fontFamily = 'Arial, sans-serif';
 
-            // Add header with logo placeholder
             tempDiv.innerHTML = `
                 <div style="text-align: center; margin-bottom: 20px;">
                     <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">PF</div>
@@ -94,7 +84,6 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
                 </div>
             `;
 
-            // Add property image placeholder
             const imageSection = document.createElement('div');
             imageSection.style.textAlign = 'center';
             imageSection.style.marginBottom = '20px';
@@ -103,7 +92,6 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
             imageSection.style.borderRadius = '8px';
             imageSection.style.border = '2px dashed #dee2e6';
 
-            // Try to add real property image if available
             if (listingData.images && listingData.images.length > 0) {
                 try {
                     const img = document.createElement('img');
@@ -114,84 +102,63 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
                     img.style.borderRadius = '8px';
                     img.style.border = '2px solid #dee2e6';
 
-                    // Add loading and error handling
-                    img.onload = () => {
-                        imageSection.innerHTML = '';
-                        imageSection.appendChild(img);
-                    };
+                    // Promise wrapper for image loading
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                        // Determine failure if not loaded within timeout
+                        setTimeout(() => {
+                            if (!img.complete) resolve(null);
+                        }, 3000);
+                    });
 
-                    img.onerror = () => {
-                        // Fallback to canvas if image fails to load
-                        createCanvasPlaceholder();
-                    };
-
-                    // Set a timeout in case image takes too long
-                    setTimeout(() => {
-                        if (!img.complete) {
-                            createCanvasPlaceholder();
-                        }
-                    }, 3000);
+                    imageSection.innerHTML = '';
+                    imageSection.appendChild(img);
 
                 } catch (error) {
                     console.warn('Failed to load property image, using placeholder:', error);
                     createCanvasPlaceholder();
                 }
             } else {
-                // No images available, use canvas placeholder
                 createCanvasPlaceholder();
             }
 
             function createCanvasPlaceholder() {
-                // Create a placeholder image with property details
                 const canvas = document.createElement('canvas');
                 canvas.width = 400;
                 canvas.height = 200;
                 const ctx = canvas.getContext('2d');
-
                 if (ctx) {
-                    // Background
                     ctx.fillStyle = '#f8f9fa';
                     ctx.fillRect(0, 0, 400, 200);
-
-                    // Border
                     ctx.strokeStyle = '#dee2e6';
                     ctx.lineWidth = 2;
                     ctx.strokeRect(0, 0, 400, 200);
-
-                    // Property icon
                     ctx.fillStyle = '#667eea';
                     ctx.font = 'bold 48px Arial';
                     ctx.textAlign = 'center';
                     ctx.fillText('🏠', 200, 80);
-
-                    // Property title
                     ctx.fillStyle = '#333';
                     ctx.font = 'bold 20px Arial';
-                    ctx.fillText(`${listingData.bedrooms || 'N/A'} BR ${listingData.type || 'Property'}`, 200, 120);
-
-                    // Location
+                    ctx.fillText(`${listingData?.bedrooms || 'N/A'} BR ${listingData?.type || 'Property'}`, 200, 120);
                     ctx.fillStyle = '#666';
                     ctx.font = '14px Arial';
-                    ctx.fillText(listingData.location?.name || 'Location', 200, 140);
-
-                    // Price
+                    ctx.fillText(listingData?.location?.name || 'Location', 200, 140);
                     ctx.fillStyle = '#28a745';
                     ctx.font = 'bold 16px Arial';
-                    const priceText = listingData.price?.amounts?.yearly
+                    const priceText = listingData?.price?.amounts?.yearly
                         ? `${listingData.price.amounts.yearly.toLocaleString()} AED`
-                        : listingData.price?.amounts?.sale
+                        : listingData?.price?.amounts?.sale
                             ? `${listingData.price.amounts.sale.toLocaleString()} AED`
                             : 'POA';
-                    ctx.fillText(priceText, 200, 160);
+                    ctx.fillText(priceText || 'POA', 200, 160);
                 }
-
                 imageSection.innerHTML = '';
                 imageSection.appendChild(canvas);
             }
 
             tempDiv.appendChild(imageSection);
 
-            // Add property details
             const detailsSection = document.createElement('div');
             detailsSection.innerHTML = `
                 <div style="margin-bottom: 20px;">
@@ -210,7 +177,6 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
             `;
             tempDiv.appendChild(detailsSection);
 
-            // Add amenities if available
             if (listingData.amenities && listingData.amenities.length > 0) {
                 const amenitiesSection = document.createElement('div');
                 amenitiesSection.innerHTML = `
@@ -226,7 +192,6 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
                 tempDiv.appendChild(amenitiesSection);
             }
 
-            // Add multiple images if available
             if (listingData.images && listingData.images.length > 1) {
                 const imagesSection = document.createElement('div');
                 imagesSection.innerHTML = `
@@ -245,7 +210,6 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
                 tempDiv.appendChild(imagesSection);
             }
 
-            // Add description if available
             if (listingData.description?.en) {
                 const descSection = document.createElement('div');
                 descSection.innerHTML = `
@@ -257,7 +221,6 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
                 tempDiv.appendChild(descSection);
             }
 
-            // Add footer
             const footer = document.createElement('div');
             footer.innerHTML = `
                 <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #666; font-size: 10px;">
@@ -266,11 +229,9 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
             `;
             tempDiv.appendChild(footer);
 
-            // Add to DOM temporarily
             document.body.appendChild(tempDiv);
 
             try {
-                // Convert to canvas
                 const canvasResult = await html2canvas(tempDiv, {
                     scale: 2,
                     useCORS: true,
@@ -278,21 +239,16 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
                     backgroundColor: '#ffffff'
                 });
 
-                // Convert canvas to image
                 const imgData = canvasResult.toDataURL('image/png');
-
-                // Calculate dimensions
                 const imgWidth = 190;
                 const pageHeight = 297;
                 const imgHeight = (canvasResult.height * imgWidth) / canvasResult.width;
                 let heightLeft = imgHeight;
                 let position = 0;
 
-                // Add first page
                 doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
                 heightLeft -= pageHeight;
 
-                // Add additional pages if needed
                 while (heightLeft >= 0) {
                     position = heightLeft - imgHeight;
                     doc.addPage();
@@ -300,13 +256,9 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
                     heightLeft -= pageHeight;
                 }
 
-                // Save PDF
                 const fileName = `property-${listingData.reference || listingId}-${new Date().toISOString().split('T')[0]}.pdf`;
                 doc.save(fileName);
-                console.log('PDF generated successfully with images:', fileName);
-
             } finally {
-                // Clean up
                 document.body.removeChild(tempDiv);
             }
 
@@ -315,12 +267,17 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
             alert('Failed to generate PDF. Please try again.');
         } finally {
             setIsGeneratingPdf(false);
+            setVisible(false); // Close menu after action
         }
     };
 
     const handleAction = async (action: 'archive' | 'delete' | 'createPdf' | 'publish' | 'copy') => {
         setIsLoading(true);
-        setIsOpen(false);
+        // Do NOT close immediately for async actions if you want to show loading state inside menu? 
+        // Actually, better to close menu and show toast/floating loader.
+        // But for consistency let's match previous behavior - wait for action? 
+        // Previous behavior: setIsOpen(false) immediately. 
+        setVisible(false);
 
         try {
             switch (action) {
@@ -358,6 +315,8 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
     const confirmAction = (action: 'archive' | 'delete') => {
         const actionText = action.charAt(0).toUpperCase() + action.slice(1);
         const isDestructive = action === 'delete' || action === 'archive';
+
+        setVisible(false); // Close menu before showing modal
 
         openModal({
             title: `${actionText} Listing`,
@@ -401,59 +360,69 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
         }
     };
 
+    const menuContent = (
+        <div className="w-48 bg-white rounded-md shadow-sm">
+            <div className="py-1">
+                {listingData?.state?.type === 'draft' && (
+                    <button
+                        onClick={() => handleAction('publish')}
+                        disabled={isLoading}
+                        className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm ${getActionColor('publish')} disabled:opacity-50`}
+                    >
+                        {getActionIcon('publish')}
+                        {getActionLabel('publish')}
+                    </button>
+                )}
+                <button
+                    onClick={() => handleAction('createPdf')}
+                    disabled={isLoading || isGeneratingPdf}
+                    className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm ${getActionColor('createPdf')} disabled:opacity-50`}
+                >
+                    {getActionIcon('createPdf')}
+                    {getActionLabel('createPdf')}
+                </button>
+
+                <button
+                    onClick={() => confirmAction('delete')}
+                    disabled={isLoading}
+                    className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm ${getActionColor('delete')} disabled:opacity-50`}
+                >
+                    {getActionIcon('delete')}
+                    {getActionLabel('delete')}
+                </button>
+
+                <button
+                    onClick={() => confirmAction('archive')}
+                    disabled={isLoading}
+                    className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm ${getActionColor('archive')} disabled:opacity-50`}
+                >
+                    {getActionIcon('archive')}
+                    {getActionLabel('archive')}
+                </button>
+            </div>
+        </div>
+    );
+
     return (
-        <div className="relative" ref={menuRef}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                disabled={isLoading}
+        <div className="relative">
+            <Tippy
+                content={menuContent}
+                visible={visible}
+                onClickOutside={() => setVisible(false)}
+                interactive={true}
+                placement="bottom-end"
+                theme="light"
+                animation="fade"
+                offset={[0, 4]} // Offset to match previous margin top
             >
-                <MoreHorizontal size={16} className="text-gray-600" />
-            </button>
-
-            {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-50">
-                    <div className="py-1">
-                        {listingData?.state?.type === 'draft' && (
-                            <button
-                                onClick={() => handleAction('publish')}
-                                disabled={isLoading}
-                                className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm ${getActionColor('publish')} disabled:opacity-50`}
-                            >
-                                {getActionIcon('publish')}
-                                {getActionLabel('publish')}
-                            </button>
-                        )}
-                        <button
-                            onClick={() => handleAction('createPdf')}
-                            disabled={isLoading || isGeneratingPdf}
-                            className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm ${getActionColor('createPdf')} disabled:opacity-50`}
-                        >
-                            {getActionIcon('createPdf')}
-                            {getActionLabel('createPdf')}
-                        </button>
-
-
-                        <button
-                            onClick={() => confirmAction('delete')}
-                            disabled={isLoading}
-                            className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm ${getActionColor('delete')} disabled:opacity-50`}
-                        >
-                            {getActionIcon('delete')}
-                            {getActionLabel('delete')}
-                        </button>
-
-                        <button
-                            onClick={() => confirmAction('archive')}
-                            disabled={isLoading}
-                            className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm ${getActionColor('archive')} disabled:opacity-50`}
-                        >
-                            {getActionIcon('archive')}
-                            {getActionLabel('archive')}
-                        </button>
-                    </div>
-                </div>
-            )}
+                <button
+                    onClick={() => setVisible(!visible)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    disabled={isLoading}
+                >
+                    <MoreHorizontal size={16} className="text-gray-600" />
+                </button>
+            </Tippy>
 
             {ConfirmationModalComponent}
             {showSuccessToast && (

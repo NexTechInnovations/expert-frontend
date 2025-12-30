@@ -86,7 +86,7 @@ const ArchiveTable = ({ listings, onActionComplete, onReferenceClick }: ArchiveT
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.size ? `${listing.size} sqft` : '-'}</td>
                                 <td className="px-6 py-4 text-sm text-gray-600 truncate max-w-xs">{listing.location?.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <QualityScoreCircle score={listing.quality_score?.value || 0} />
+                                    <QualityScoreCircle qualityScore={listing.quality_score} score={listing.quality_score?.value || 0} />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                     {listing.assigned_to?.name || 'Unassigned'}
