@@ -61,18 +61,6 @@ function listingReducer(state: ListingState, action: ListingAction): ListingStat
         price: '',
         downPayment: '',
         numberOfCheques: '',
-        amenities: '', // Fix type error if amenities is expected to be array or string? It was [] above. Ideally keep []
-        // amenities: [], // Ah, original code had amenities: [] in reset, but state def says string[]?
-        // Let's stick to original structure (lines 48-67 of viewed file)
-        // I will just remove the duplicate assignedAgent line in my target replacement
-        // Wait, I can't easily edit line 49 AND 117 in one go with one chunk if they are far apart?
-        // view_file showed Lines 30-160. They are in same file. 
-        // I will use multi_replace for safety or two steps.
-        // Actually, let's just fix the reducer first.
-        ownerName: '',
-        price: '',
-        downPayment: '',
-        numberOfCheques: '',
         amenities: [],
         title: '',
         description: '',
@@ -123,7 +111,7 @@ const AddListingPage = () => {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const listing = res.data;
-        console.log('Fetched listing data for edit:', listing);
+
 
         const payload = {
           uae_emirate: listing.uae_emirate || '',
@@ -152,7 +140,7 @@ const AddListingPage = () => {
           reraPermitNumber: listing.rera_permit_number || '',
           dtcmPermitNumber: listing.dtcm_permit_number || '',
         };
-        console.log('Dispatching payload:', payload);
+
 
         // Map backend listing to frontend state
         dispatch({
@@ -182,13 +170,13 @@ const AddListingPage = () => {
 
     const fetchReference = async () => {
       try {
-        console.log('Fetching reference from:', `${import.meta.env.VITE_BASE_URL}/api/listings/listings/reference`);
+
         const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/listings/listings/reference`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        console.log('Reference fetch response:', res.data);
+
         if (res.data?.reference) {
-          console.log('Dispatching reference update:', res.data.reference);
+
           dispatch({ type: 'UPDATE_FIELD', field: 'reference', value: res.data.reference });
         } else {
           console.warn('No reference in response data');
@@ -271,7 +259,7 @@ const AddListingPage = () => {
     setError(null);
     setShowSuccess(false);
 
-    console.log('Developer value:', formData.developer, 'Type:', typeof formData.developer);
+
 
     const listingData = {
       assigned_to: { id: (formData.assignedAgent as SelectOption).value },
@@ -317,7 +305,7 @@ const AddListingPage = () => {
       dtcm_permit_number: formData.dtcmPermitNumber
     };
 
-    console.log('Final listingData:', listingData);
+
 
     const apiPayload = new FormData();
 
