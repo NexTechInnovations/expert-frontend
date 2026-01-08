@@ -9,61 +9,64 @@ import CommunityAnalysis from '../components/dashboard/CommunityAnalysis';
 import { PerformanceProvider, usePerformance } from '../context/PerformanceContext';
 import type { FilterOption } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import CustomDateRangePicker from '../components/dashboard/CustomDateRangePicker';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Area, BarChart, Bar, Cell } from 'recharts';
 
 const statMapping = [
-    { key: 'credits_spent', label: 'Credits Spent', description: "View the total number of credits you've used on our platform during the selected time period and specific filters you chose. Credits are utilized for publishing and upgrading your listings." },
-    { key: 'published_listings', label: 'Published Listings', description: "See the number of listings you have published on our platform during the selected time period and specific filters you chose. Publishing more high-quality listings can help you generate more leads and increase your chances of making successful transactions." },
-    { key: 'live_listings', label: 'Live Listings', description: "Track the number of listings you have online on our platform during the selected time period and specific filters. Published listings reflect all listings posted, while live listings show only those visible to consumers. These numbers may differ, which is normal." },
-    { key: 'listings_impressions',label: 'Impressions', description: "See how many times your listings have been exposed to home-seekers on our search pages during the selected time period and specific filters you chose. A higher number of impressions means greater visibility for your listings." },
-    {  key: 'listings_clicks', label: 'Listing Clicks', description: "This metric shows the total number of clicks your listings received from the search results page. Higher clicks indicate strong interest from potential buyers or renters." },
-    { key: 'leads', label: 'Leads', description: "Leads are the number of inquiries (calls, messages, emails) you received through the platform. This is a direct measure of consumer interest in your properties." },
-    { key: 'lpl', label: 'Leads per Listing', description: "This calculates the average number of leads generated per listing, helping you understand the effectiveness of individual properties. (LPL = Total Leads / Total Live Listings)." }
+  { key: 'credits_spent', label: 'Credits Spent', description: "View the total number of credits you've used on our platform during the selected time period and specific filters you chose. Credits are utilized for publishing and upgrading your listings." },
+  { key: 'published_listings', label: 'Published Listings', description: "See the number of listings you have published on our platform during the selected time period and specific filters you chose. Publishing more high-quality listings can help you generate more leads and increase your chances of making successful transactions." },
+  { key: 'live_listings', label: 'Live Listings', description: "Track the number of listings you have online on our platform during the selected time period and specific filters. Published listings reflect all listings posted, while live listings show only those visible to consumers. These numbers may differ, which is normal." },
+  { key: 'listings_impressions', label: 'Impressions', description: "See how many times your listings have been exposed to home-seekers on our search pages during the selected time period and specific filters you chose. A higher number of impressions means greater visibility for your listings." },
+  { key: 'listings_clicks', label: 'Listing Clicks', description: "This metric shows the total number of clicks your listings received from the search results page. Higher clicks indicate strong interest from potential buyers or renters." },
+  { key: 'leads', label: 'Leads', description: "Leads are the number of inquiries (calls, messages, emails) you received through the platform. This is a direct measure of consumer interest in your properties." },
+  { key: 'lpl', label: 'Leads per Listing', description: "This calculates the average number of leads generated per listing, helping you understand the effectiveness of individual properties. (LPL = Total Leads / Total Live Listings)." }
 ];
 
 const PerformanceOverviewComponent = () => {
   const { stats, loading, fetchStats } = usePerformance();
   const [activeStatKey, setActiveStatKey] = useState<string>('published_listings');
   const [openFilterIndex, setOpenFilterIndex] = useState<number | null>(null);
-  
+
   // حالة الفلاتر
-  const [filters, setFilters] = useState<{ [key: string]: string }>({
-      category: 'residential',
-      property_type: 'all',
-      offering_type: 'both',
-      location: 'all',
-      date_range: '30d'
+  const [filters, setFilters] = useState<{ [key: string]: string | null }>({
+    category: 'residential',
+    property_type: 'all',
+    offering_type: 'both',
+    location: 'all',
+    date_range: '30d',
+    startDate: null,
+    endDate: null
   });
-  
+
   const [filterLabels, setFilterLabels] = useState<{ [key: string]: string }>({
-      category: "Residential",
-      property_type: "Property type",
-      offering_type: "Rent and Sale",
-      location: "All locations",
-      date_range: "Last 30 days"
+    category: "Residential",
+    property_type: "Property type",
+    offering_type: "Rent and Sale",
+    location: "All locations",
+    date_range: "Last 30 days"
   });
 
   // جلب البيانات عند تغيير الفلاتر
   useEffect(() => {
-      console.log('Filters changed, fetching stats with:', filters);
-      fetchStats(filters);
+    console.log('Filters changed, fetching stats with:', filters);
+    fetchStats(filters);
   }, [filters, fetchStats]);
 
   const handleFilterChange = (filterKey: string, option: FilterOption) => {
-      console.log(`Filter changing: ${filterKey} = ${option.value} (${option.label})`);
-      setFilters(prev => {
-          const newFilters = { ...prev, [filterKey]: option.value as string };
-          console.log('New filters:', newFilters);
-          return newFilters;
-      });
-      setFilterLabels(prev => {
-          const newLabels = { ...prev, [filterKey]: option.label };
-          console.log('New filter labels:', newLabels);
-          return newLabels;
-      });
-      setOpenFilterIndex(null);
+    console.log(`Filter changing: ${filterKey} = ${option.value} (${option.label})`);
+    setFilters(prev => {
+      const newFilters = { ...prev, [filterKey]: option.value as string };
+      console.log('New filters:', newFilters);
+      return newFilters;
+    });
+    setFilterLabels(prev => {
+      const newLabels = { ...prev, [filterKey]: option.label };
+      console.log('New filter labels:', newLabels);
+      return newLabels;
+    });
+    setOpenFilterIndex(null);
   };
-  
+
   const handleFilterClick = (index: number) => {
     setOpenFilterIndex(openFilterIndex === index ? null : index);
   };
@@ -72,8 +75,7 @@ const PerformanceOverviewComponent = () => {
     { key: 'category', label: filterLabels.category, options: [{ label: 'All', value: 'all' }, { label: 'Residential', value: 'residential' }, { label: 'Commercial', value: 'commercial' }] },
     { key: 'property_type', label: filterLabels.property_type, options: [{ label: 'All types', value: 'all' }, { label: 'Apartment', value: 'apartment' }, { label: 'Villa', value: 'villa' }, { label: 'Office', value: 'office' }, { label: 'Retail', value: 'retail' }] },
     { key: 'offering_type', label: filterLabels.offering_type, options: [{ label: 'Rent and Sale', value: 'both' }, { label: 'Rent', value: 'rent' }, { label: 'Sale', value: 'sale' }] },
-    { key: 'location', label: filterLabels.location, options: [{ label: 'All locations', value: 'all'}, { label: 'Dubai', value: 'dubai' }, { label: 'Abu Dhabi', value: 'abu_dhabi' }] },
-    { key: 'date_range', label: filterLabels.date_range, options: [{ label: 'Last 7 days', value: '7d' }, { label: 'Last 30 days', value: '30d' }, { label: 'Last 90 days', value: '90d' }] }
+    { key: 'location', label: filterLabels.location, options: [{ label: 'All locations', value: 'all' }, { label: 'Dubai', value: 'dubai' }, { label: 'Abu Dhabi', value: 'abu_dhabi' }] }
   ];
 
   console.log('Filter configs updated:', filterConfigs);
@@ -84,10 +86,10 @@ const PerformanceOverviewComponent = () => {
   // إعداد بيانات الرسم البياني الزمني (محاكاة البيانات)
   const getTimeSeriesData = () => {
     if (!stats) return [];
-    
+
     const days = stats.number_of_days || 30;
     const data = [];
-    
+
     for (let i = 0; i < days; i++) {
       const baseValue = getBaseValueForStat();
       const randomFactor = 0.5 + Math.random() * 1; // تغيير عشوائي بين 0.5 و 1.5
@@ -97,14 +99,14 @@ const PerformanceOverviewComponent = () => {
         date: new Date(Date.now() - (days - i - 1) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       });
     }
-    
+
     return data;
   };
 
   // الحصول على القيمة الأساسية حسب نوع الإحصائية
   const getBaseValueForStat = () => {
     if (!stats) return 0;
-    
+
     switch (activeStatKey) {
       case 'published_listings':
         return Math.max(stats.published_listings / 10, 1);
@@ -188,7 +190,7 @@ const PerformanceOverviewComponent = () => {
     <div className="p-4 sm:p-6 md:p-8">
       <PerformanceHeader />
 
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {filterConfigs.map((filter, index) => (
           <FilterDropdown
             key={filter.key}
@@ -199,8 +201,27 @@ const PerformanceOverviewComponent = () => {
             onSelect={(option) => handleFilterChange(filter.key, option)}
           />
         ))}
+        <CustomDateRangePicker
+          onRangeSelect={(range) => {
+            setFilters(prev => ({
+              ...prev,
+              date_range: 'custom',
+              startDate: range.startDate,
+              endDate: range.endDate
+            }));
+            setFilterLabels(prev => ({
+              ...prev,
+              date_range: range.label
+            }));
+          }}
+          initialRange={{
+            startDate: filters.startDate,
+            endDate: filters.endDate,
+            label: filterLabels.date_range
+          }}
+        />
       </div>
-      
+
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         {statMapping.map((stat) => {
           let displayValue = 0;
@@ -231,7 +252,7 @@ const PerformanceOverviewComponent = () => {
                 displayValue = 0;
             }
           }
-          
+
           return (
             <StatCard
               key={stat.key}
@@ -247,7 +268,7 @@ const PerformanceOverviewComponent = () => {
       <div className="mt-6 p-6 bg-white border border-gray-200 rounded-lg">
         <h2 className="font-semibold text-gray-800">{activeStat?.label}</h2>
         <p className="text-sm text-gray-500 mt-1">{activeStat?.description}</p>
-        
+
         {/* نص توضيحي إضافي */}
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-start">
@@ -258,13 +279,13 @@ const PerformanceOverviewComponent = () => {
             </div>
             <div className="ml-3">
               <p className="text-sm text-blue-800">
-                <strong>Tip:</strong> {activeStat?.label} data is displayed over time to show trends and patterns. 
+                <strong>Tip:</strong> {activeStat?.label} data is displayed over time to show trends and patterns.
                 The chart updates automatically based on your selected filters and date range.
               </p>
             </div>
           </div>
         </div>
-        
+
         <div className="mt-4 flex flex-col lg:flex-row gap-6">
           <div className="flex-grow">
             {loading ? (
@@ -274,17 +295,17 @@ const PerformanceOverviewComponent = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={timeSeriesData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                    <XAxis 
-                      dataKey="date" 
+                    <XAxis
+                      dataKey="date"
                       tick={{ fontSize: 12, fill: '#6B7280' }}
                       axisLine={{ stroke: '#E5E7EB' }}
                     />
-                    <YAxis 
+                    <YAxis
                       tick={{ fontSize: 12, fill: '#6B7280' }}
                       axisLine={{ stroke: '#E5E7EB' }}
                       tickFormatter={formatValue}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => [value.toLocaleString(), activeStat?.label]}
                       labelFormatter={(label) => `Date: ${label}`}
                       contentStyle={{
@@ -294,11 +315,11 @@ const PerformanceOverviewComponent = () => {
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                       }}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#3B82F6" 
-                      fill="#3B82F6" 
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#3B82F6"
+                      fill="#3B82F6"
                       fillOpacity={0.1}
                       strokeWidth={2}
                     />
@@ -318,7 +339,7 @@ const PerformanceOverviewComponent = () => {
                   <BarChart data={chartData} layout="horizontal" margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
                     <XAxis type="number" hide />
                     <YAxis type="category" dataKey="name" hide />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => [value.toLocaleString(), 'Value']}
                       contentStyle={{
                         backgroundColor: 'white',
@@ -340,7 +361,7 @@ const PerformanceOverviewComponent = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="mt-8"><FactorsSection /></div>
       <CommunityAnalysis />
     </div>
@@ -349,9 +370,9 @@ const PerformanceOverviewComponent = () => {
 
 // Wrapper Component
 const PerformanceOverview = () => (
-    <PerformanceProvider>
-        <PerformanceOverviewComponent />
-    </PerformanceProvider>
+  <PerformanceProvider>
+    <PerformanceOverviewComponent />
+  </PerformanceProvider>
 );
 
 export default PerformanceOverview;

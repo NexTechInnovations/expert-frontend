@@ -11,7 +11,7 @@ const CompanyProfile = () => {
     const fetchCompanyProfile = async () => {
       try {
         // استخدام الخدمة الجديدة لجلب بيانات العميل
-        const clientData = await fetchClientById(11441);
+        const clientData = await fetchClientById(1);
         setProfileData(clientData);
       } catch (err) {
         // في حالة فشل API، استخدم البيانات التجريبية
@@ -73,7 +73,7 @@ const CompanyProfile = () => {
           isWhatsAppInsights: true,
           isExclusive: false
         };
-        
+
         setProfileData(mockData);
       } finally {
         setLoading(false);

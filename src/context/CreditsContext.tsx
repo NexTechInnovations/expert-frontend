@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { creditService, type ICreditTransaction, type ICreditFilters, type ICreditBalance } from '../services/creditService';
 import axios from 'axios';
+import { useAuth } from './AuthContext';
 
 interface CreditsContextType {
   transactions: ICreditTransaction[];
@@ -31,6 +32,7 @@ interface CreditsProviderProps {
 }
 
 export const CreditsProvider: React.FC<CreditsProviderProps> = ({ children }) => {
+  const { token } = useAuth();
   const [transactions, setTransactions] = useState<ICreditTransaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<ICreditTransaction[]>([]);
   const [balance, setBalance] = useState<ICreditBalance>({ current: 0, earned: 0, spent: 0, expired: 0 });
@@ -41,8 +43,11 @@ export const CreditsProvider: React.FC<CreditsProviderProps> = ({ children }) =>
 
   // جلب customer_id من endpoint الـ me
   const fetchCustomerId = useCallback(async () => {
+    if (!token) return;
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/users/me`);
+      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const userId = response.data.id || response.data.user_id;
       if (userId) {
         setCustomerId(parseInt(userId.toString()));
@@ -52,26 +57,45 @@ export const CreditsProvider: React.FC<CreditsProviderProps> = ({ children }) =>
     } catch (err) {
       console.error('Error fetching customer ID:', err);
       // fallback إلى customer_id افتراضي
-      setCustomerId(6);
-      setFiltersState(prev => ({ ...prev, customer_id: 6 }));
+      setCustomerId(1);
+      setFiltersState(prev => ({ ...prev, customer_id: 1 }));
     }
-  }, []);
+  }, [token]);
+
+  const fetchBalance = useCallback(async () => {
+    if (!token) return;
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/credits/my-multi-balance`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const { remaining_credits, total_credits, used_credits } = response.data;
+      setBalance({
+        current: remaining_credits,
+        earned: total_credits,
+        spent: used_credits,
+        expired: 0 // API doesn't return this yet
+      });
+    } catch (err) {
+      console.error('Error fetching balance:', err);
+    }
+  }, [token]);
 
   // جلب البيانات من API واحد
   const fetchTransactions = useCallback(async () => {
-    if (!customerId) return; // لا نجلب البيانات بدون customer_id
-    
+    if (!customerId || !token) return; // لا نجلب البيانات بدون customer_id
+
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await creditService.getCreditTransactions({
+
+      // Fetch transactions independently
+      const transactionsResponse = await creditService.getCreditTransactions({
         ...filters,
         customer_id: customerId
       });
-      
-      setTransactions(response.data);
-      
+
+      setTransactions(transactionsResponse.data);
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch transactions';
       setError(errorMessage);
@@ -79,18 +103,14 @@ export const CreditsProvider: React.FC<CreditsProviderProps> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  }, [filters, customerId]);
+  }, [filters, customerId, token]);
 
   // فلترة البيانات عند تغيير الفلاتر
   useEffect(() => {
     if (!customerId) return; // لا نفلتر بدون customer_id
-    
+
     const filtered = creditService.filterTransactions(transactions, filters);
     setFilteredTransactions(filtered);
-    
-    // حساب الرصيد من البيانات المفلترة
-    const newBalance = creditService.calculateBalance(filtered);
-    setBalance(newBalance);
   }, [transactions, filters, customerId]);
 
   // تحديث الفلاتر
@@ -105,25 +125,31 @@ export const CreditsProvider: React.FC<CreditsProviderProps> = ({ children }) =>
 
   // تحديث البيانات
   const refreshData = useCallback(async () => {
-    await fetchTransactions();
-  }, [fetchTransactions]);
+    await Promise.all([
+      fetchTransactions(),
+      fetchBalance()
+    ]);
+  }, [fetchTransactions, fetchBalance]);
 
   // مسح الأخطاء
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  // جلب customer_id عند التحميل
+  // جلب customer_id عند التحميل او تغيير التوكن
   useEffect(() => {
-    fetchCustomerId();
-  }, [fetchCustomerId]);
+    if (token) {
+      fetchCustomerId();
+      fetchBalance();
+    }
+  }, [fetchCustomerId, fetchBalance, token]);
 
   // جلب البيانات بعد الحصول على customer_id
   useEffect(() => {
-    if (customerId) {
+    if (customerId && token) {
       fetchTransactions();
     }
-  }, [customerId, fetchTransactions]);
+  }, [customerId, fetchTransactions, token]);
 
   const value: CreditsContextType = {
     transactions,

@@ -46,7 +46,18 @@ const MediaForm = ({ images, onSetImages, onComplete }: MediaFormProps) => {
 
     const removeFile = (fileToRemove: (File | { url: string; preview?: string; })) => {
         // إزالة الملف من الحالة الرئيسية
-        onSetImages(images.filter(file => file !== fileToRemove));
+        onSetImages(images.filter(file => {
+            // Compare File objects by name and size
+            if (file instanceof File && fileToRemove instanceof File) {
+                return !(file.name === fileToRemove.name && file.size === fileToRemove.size);
+            }
+            // Compare URL objects by URL
+            if ('url' in file && 'url' in fileToRemove) {
+                return file.url !== fileToRemove.url;
+            }
+            // Different types, keep the file
+            return true;
+        }));
     };
 
     const { getRootProps, getInputProps } = useDropzone({

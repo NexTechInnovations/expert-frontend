@@ -31,6 +31,10 @@ const CoreDetailsForm = ({
       if (newEmirate !== state.uae_emirate) {
         dispatch({ type: "RESET_PERMIT" });
       }
+      // Auto-set permitType to 'adrec' for Abu Dhabi
+      if (newEmirate === "abu_dhabi") {
+        dispatch({ type: "UPDATE_FIELD", field: "permitType", value: "adrec" });
+      }
     }
 
     if (field === "permitType") {
@@ -50,8 +54,10 @@ const CoreDetailsForm = ({
   useEffect(() => {
     const {
       uae_emirate,
+      city,
       category,
       offeringType,
+      rentalPeriod,
       propertyType,
       propertyLocation,
       assignedAgent,
@@ -68,6 +74,11 @@ const CoreDetailsForm = ({
       propertyLocation &&
       assignedAgent &&
       reference;
+
+    // Check rental period is selected if offering type is rent
+    const rentalPeriodConditionsMet =
+      offeringType === "rent" ? rentalPeriod !== null : true;
+
     const dubaiPermitConditionsMet =
       uae_emirate === "dubai"
         ? permitType &&
@@ -78,15 +89,17 @@ const CoreDetailsForm = ({
 
     const abuDhabiPermitConditionsMet =
       uae_emirate === "abu_dhabi"
-        ? permitType &&
-        (permitType === "adrec" || permitType === "non-adrec") &&
-        (permitType === "non-adrec" ||
-          (permitType === "adrec" && dtcmPermitNumber && dtcmPermitNumber.length > 5 && reraPermitNumber && reraPermitNumber.length > 5))
+        ? dtcmPermitNumber && dtcmPermitNumber.length > 5 && reraPermitNumber && reraPermitNumber.length > 5
         : true;
 
     const northernEmiratesPermitConditionsMet =
-      uae_emirate === "northern_emirates" ? true : true;
-    if (baseConditionsMet && dubaiPermitConditionsMet && abuDhabiPermitConditionsMet && northernEmiratesPermitConditionsMet) {
+      uae_emirate === "northern_emirates"
+        ? (city === "al_ain"
+          ? (dtcmPermitNumber && dtcmPermitNumber.length > 5 && reraPermitNumber && reraPermitNumber.length > 5)
+          : (city === "other"))
+        : true;
+
+    if (baseConditionsMet && rentalPeriodConditionsMet && dubaiPermitConditionsMet && abuDhabiPermitConditionsMet && northernEmiratesPermitConditionsMet) {
       onComplete();
     }
   }, [state, onComplete]);
@@ -203,66 +216,77 @@ const CoreDetailsForm = ({
         </>
       )}
 
-      {state.uae_emirate && state.uae_emirate === "abu_dhabi" && (
+      {state.uae_emirate === "northern_emirates" && (
+        <FormLabel text="City" required>
+          <CustomSelect
+            placeholder="Select a city"
+            options={[
+              { value: "al_ain", label: "Al Ain" },
+              { value: "other", label: "Any city except Al Ain" },
+            ]}
+            value={
+              state.city
+                ? {
+                  value: state.city,
+                  label: state.city === "al_ain" ? "Al Ain" : "Any city except Al Ain",
+                }
+                : null
+            }
+            onChange={(val) => updateField("city", val ? (val.value as string) : null)}
+          />
+        </FormLabel>
+      )}
+
+      {((state.uae_emirate === "abu_dhabi") || (state.uae_emirate === "northern_emirates" && state.city === "al_ain")) && (
         <>
-          <FormLabel text="Permit type" required>
-            <SegmentedControl
+          <FormLabel text="Broker license" required>
+            <CustomSelect
+              placeholder="12345678 REAL ESTATE — Brokerage Registration Numb..."
               options={[
-                { label: "ADREC", value: "adrec" },
-                { label: "Non-ADREC", value: "non-adrec" },
+                { value: "12345678", label: "12345678 REAL ESTATE — Brokerage Registration Number" },
+                { value: "87654321", label: "87654321 REAL ESTATE — Brokerage Registration Number" },
+                { value: "11223344", label: "11223344 REAL ESTATE — Brokerage Registration Number" },
               ]}
-              value={state.permitType}
-              onChange={(val) => updateField("permitType", val)}
+              value={state.reraPermitNumber ? { value: state.reraPermitNumber, label: state.reraPermitNumber + " REAL ESTATE — Brokerage Registration Number" } : null}
+              onChange={(val) => updateField("reraPermitNumber", val ? val.value as string : "")}
             />
           </FormLabel>
-          {state.permitType === "adrec" && (
-            <>
-              <FormLabel text="Broker license" required>
-                <CustomSelect
-                  placeholder="Select an option*"
-                  options={[
-                    { value: "adrec_license_1", label: "ADREC License 1" },
-                    { value: "adrec_license_2", label: "ADREC License 2" },
-                    { value: "adrec_license_3", label: "ADREC License 3" },
-                  ]}
-                  value={state.reraPermitNumber ? { value: state.reraPermitNumber, label: state.reraPermitNumber } : null}
-                  onChange={(val) => updateField("reraPermitNumber", val ? val.value as string : "")}
-                />
-              </FormLabel>
-              <FormLabel text="Permit number" required>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    className="w-full p-2.5 border rounded-lg bg-white text-gray-900"
-                    value={state.dtcmPermitNumber}
-                    onChange={(e) => updateField("dtcmPermitNumber", e.target.value)}
-                    placeholder="Enter permit number"
-                  />
-                  <button className="bg-white border border-violet-600 text-violet-700 font-semibold py-2.5 px-4 rounded-lg hover:bg-violet-50 transition">
-                    Validate
-                  </button>
-                </div>
-              </FormLabel>
-            </>
-          )}
+          <FormLabel text="ADREC permit number" required>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                className="w-full p-2.5 border rounded-lg bg-white text-gray-900"
+                value={state.dtcmPermitNumber}
+                onChange={(e) => updateField("dtcmPermitNumber", e.target.value)}
+                placeholder="2025790001271114"
+              />
+              <button className="bg-white border border-violet-600 text-violet-700 font-semibold py-2.5 px-4 rounded-lg hover:bg-violet-50 transition whitespace-nowrap">
+                Validate
+              </button>
+            </div>
+            <div className="mt-2 flex items-start gap-2">
+              <input type="checkbox" className="mt-1" />
+              <p className="text-sm text-gray-600">
+                Ready to validate<br />
+                <span className="text-gray-500">Enter the permit number above</span>
+              </p>
+            </div>
+          </FormLabel>
         </>
       )}
 
       {state.uae_emirate &&
-        (state.uae_emirate === "northern_emirates" ||
+        ((state.uae_emirate === "northern_emirates" && state.city === "other") ||
           (state.uae_emirate === "dubai" &&
             state.permitType &&
             (state.permitType === "none" ||
               (state.reraPermitNumber && state.reraPermitNumber.length > 5) ||
               (state.dtcmPermitNumber && state.dtcmPermitNumber.length > 5))) ||
-          (state.uae_emirate === "abu_dhabi" &&
-            state.permitType &&
-            ((state.permitType === "non-adrec") ||
-              (state.permitType === "adrec" &&
-                state.dtcmPermitNumber &&
-                state.dtcmPermitNumber.length > 5 &&
-                state.reraPermitNumber &&
-                state.reraPermitNumber.length > 5)))) && (
+          ((state.uae_emirate === "abu_dhabi" || (state.uae_emirate === "northern_emirates" && state.city === "al_ain")) &&
+            state.dtcmPermitNumber &&
+            state.dtcmPermitNumber.length > 5 &&
+            state.reraPermitNumber &&
+            state.reraPermitNumber.length > 5)) && (
           <FormLabel text="Category" required>
             <SegmentedControl
               options={[
@@ -320,7 +344,11 @@ const CoreDetailsForm = ({
                   label:
                     state.rentalPeriod === "yearly"
                       ? "Per year"
-                      : "Per month",
+                      : state.rentalPeriod === "monthly"
+                        ? "Per month"
+                        : state.rentalPeriod === "weekly"
+                          ? "Per week"
+                          : "Per day",
                 }
                 : null
             }

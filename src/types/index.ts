@@ -34,6 +34,7 @@ export interface ListingState {
   permitType: 'rera' | 'dtcm' | 'none' | 'adrec' | 'non-adrec' | null;
   reraPermitNumber: string;
   dtcmPermitNumber: string;
+  city?: string | null;
   category: 'residential' | 'commercial' | null;
   offeringType: 'rent' | 'sale' | null;
   rentalPeriod: 'yearly' | 'monthly' | 'weekly' | 'daily' | null;
@@ -59,7 +60,9 @@ export interface ListingState {
   numberOfCheques?: string;
   amenities: string[];
   title: string;
+  title_ar: string;
   description: string;
+  description_ar: string;
   images: (File | { url: string; preview?: string; })[]; // تم تعديل هنا
   latitude?: number | null;
   longitude?: number | null;

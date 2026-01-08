@@ -320,6 +320,7 @@ function validateEmail(email: string) {
 const AddNewUser = () => {
     const navigate = useNavigate();
     const { roles } = useAuth();
+    console.log('AddNewUser: Roles from AuthContext:', roles);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [phoneCode, setPhoneCode] = useState<Option | null>(countryCodes[0]);
@@ -334,9 +335,11 @@ const AddNewUser = () => {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    const roleOptions = useMemo(() =>
-        roles.map(role => ({ value: role.id.toString(), label: role.name, key: role.roleKey })),
-        [roles]);
+    const roleOptions = useMemo(() => {
+        const options = roles.map(role => ({ value: role.id.toString(), label: role.name, key: role.roleKey }));
+        console.log('AddNewUser: roleOptions computed:', options);
+        return options;
+    }, [roles]);
 
     // التحقق من صحة النموذج - إذا كان role agent، يجب إضافة الجنسية واللغات
     const isFormValid = firstName &&

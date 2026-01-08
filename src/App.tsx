@@ -102,7 +102,9 @@ const AppRoutes = () => {
 function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <CreditsProvider>
+        <AppRoutes />
+      </CreditsProvider>
     </AuthProvider>
   );
 }

@@ -5,6 +5,7 @@ import QualityScoreCircle from '../ui/QualityScoreCircle';
 import ActionMenu from '../ui/ActionMenu';
 import type { Listing } from '../../context/ListingsContext';
 import SuccessToast from '../ui/SuccessToast';
+import { formatLastUpdated } from '../../utils/formatDate';
 
 const tableHeaders = [
     "Listing Reference",
@@ -110,7 +111,7 @@ const ListingsTable = ({ listings, isSelectionMode, selectedIds, onSelectionChan
                                     {listing.assigned_to?.name || 'Unassigned'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {listing.credits_spent || 10}
+                                    {listing.credits_spent !== undefined ? listing.credits_spent : '0'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
                                     {listing.price?.amounts?.[listing.price.type]
@@ -125,7 +126,7 @@ const ListingsTable = ({ listings, isSelectionMode, selectedIds, onSelectionChan
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-center"><span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 capitalize">{listing.state.type}</span></td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{new Date(listing.updated_at).toLocaleDateString()}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatLastUpdated(listing.updated_at)}</td>
 
                                 <td className="px-6 py-4 whitespace-nowrap text-center relative">
                                     <ActionMenu

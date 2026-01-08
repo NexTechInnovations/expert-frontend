@@ -21,10 +21,10 @@ const CreditsStatus = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/credits/my-multi-balance`);
         setBalance(response.data);
-        
+
       } catch (err) {
         console.error('Error fetching credit balance:', err);
         setError('Failed to load credits');
@@ -39,12 +39,12 @@ const CreditsStatus = () => {
   // حساب الأيام المتبقية
   const getDaysRemaining = () => {
     if (!balance?.cycle?.end_date) return 0;
-    
+
     const endDate = new Date(balance.cycle.end_date);
     const now = new Date();
     const diffTime = endDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return Math.max(0, diffDays);
   };
 
@@ -93,12 +93,12 @@ const CreditsStatus = () => {
       </div>
       <p className="text-3xl font-bold text-gray-800 mb-2">{balance.remaining_credits}</p>
       <div className="w-full bg-gray-200 rounded-full h-2">
-        <div 
-          className="bg-violet-600 h-2 rounded-full transition-all duration-300" 
+        <div
+          className="bg-violet-600 h-2 rounded-full transition-all duration-300"
           style={{ width: `${getPercentage()}%` }}
         ></div>
       </div>
-      
+
       {/* Additional Info */}
       <div className="mt-3 text-xs text-gray-500 space-y-1">
         <div className="flex justify-between">

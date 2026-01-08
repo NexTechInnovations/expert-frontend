@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MoreHorizontal, FileText, Trash2, Archive, ThumbsUp, Copy } from 'lucide-react';
+import { MoreHorizontal, FileText, Trash2, Archive, ThumbsUp, Copy, Ban } from 'lucide-react';
 import axios from 'axios';
 import { useConfirmationModal } from '../../hooks/useConfirmationModal';
 import { useListings } from '../../context/ListingsContext';
@@ -50,7 +50,7 @@ interface ActionMenuProps {
 
 const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProps) => {
     const { openModal, ConfirmationModalComponent } = useConfirmationModal();
-    const { archiveListing, publishListing, deleteListing } = useListings();
+    const { archiveListing, publishListing, deleteListing, unpublishListing } = useListings();
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [showErrorToast, setShowErrorToast] = useState(false);
     const [message, setMessage] = useState('');
@@ -271,7 +271,7 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
         }
     };
 
-    const handleAction = async (action: 'archive' | 'delete' | 'createPdf' | 'publish' | 'copy') => {
+    const handleAction = async (action: 'archive' | 'delete' | 'createPdf' | 'publish' | 'copy' | 'unpublish') => {
         setIsLoading(true);
         // Do NOT close immediately for async actions if you want to show loading state inside menu? 
         // Actually, better to close menu and show toast/floating loader.
@@ -297,6 +297,11 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
                 case 'publish':
                     await publishListing(listingId);
                     setMessage('Listing published successfully! 🚀');
+                    setShowSuccessToast(true);
+                    break;
+                case 'unpublish':
+                    await unpublishListing(listingId);
+                    setMessage('Listing reverted to draft successfully!');
                     setShowSuccessToast(true);
                     break;
             }
@@ -334,6 +339,7 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
             case 'archive': return <Archive size={16} />;
             case 'delete': return <Trash2 size={16} />;
             case 'copy': return <Copy size={16} />;
+            case 'unpublish': return <Ban size={16} />;
             default: return <FileText size={16} />;
         }
     };
@@ -345,6 +351,7 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
             case 'archive': return 'Archive';
             case 'delete': return 'Delete';
             case 'copy': return 'Copy Reference';
+            case 'unpublish': return 'Unpublish';
             default: return action;
         }
     };
@@ -356,6 +363,7 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
             case 'archive': return 'text-gray-700 hover:bg-gray-50';
             case 'delete': return 'text-red-600 hover:bg-red-50';
             case 'copy': return 'text-violet-600 hover:bg-violet-50';
+            case 'unpublish': return 'text-gray-700 hover:bg-gray-50';
             default: return 'text-gray-700 hover:bg-gray-50';
         }
     };
@@ -371,6 +379,16 @@ const ActionMenu = ({ listingId, onActionComplete, listingData }: ActionMenuProp
                     >
                         {getActionIcon('publish')}
                         {getActionLabel('publish')}
+                    </button>
+                )}
+                {listingData?.state?.stage === 'live' && (
+                    <button
+                        onClick={() => handleAction('unpublish')}
+                        disabled={isLoading}
+                        className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm ${getActionColor('unpublish')} disabled:opacity-50`}
+                    >
+                        {getActionIcon('unpublish')}
+                        {getActionLabel('unpublish')}
                     </button>
                 )}
                 <button

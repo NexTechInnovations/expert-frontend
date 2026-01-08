@@ -16,15 +16,18 @@ import SuccessToast from '../components/ui/SuccessToast';
 import ErrorToast from '../components/ui/ErrorToast';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import { useAuth } from '../context/AuthContext';
+import { useCredits } from '../context/CreditsContext';
+import PromotionModal from '../components/dashboard/listing/PromotionModal';
 
 const initialState: ListingState = {
-  uae_emirate: '', permitType: null, reraPermitNumber: '', dtcmPermitNumber: '',
+  uae_emirate: '', city: null, permitType: null, reraPermitNumber: '', dtcmPermitNumber: '',
   category: null, offeringType: null, rentalPeriod: null, propertyType: '',
   propertyLocation: null, assignedAgent: null, reference: '',
   available: 'immediately', availableDate: null, size: '', bedrooms: '',
   bathrooms: '', developer: '', unitNumber: '', parkingSlots: '',
   furnishingType: null, age: '', numberOfFloors: '', projectStatus: '', ownerName: '',
-  price: '', downPayment: '', numberOfCheques: '', amenities: [], title: '', description: '',
+  price: '', downPayment: '', numberOfCheques: '', amenities: [],
+  title: '', title_ar: '', description: '', description_ar: '',
   images: [], latitude: null, longitude: null, googleAddress: '', googleAddressComponents: null
 };
 
@@ -38,6 +41,7 @@ function listingReducer(state: ListingState, action: ListingAction): ListingStat
       return {
         ...state,
         permitType: null,
+        city: null,
         reraPermitNumber: '',
         dtcmPermitNumber: '',
         category: null,
@@ -57,18 +61,6 @@ function listingReducer(state: ListingState, action: ListingAction): ListingStat
         age: '',
         numberOfFloors: '',
         projectStatus: '',
-        ownerName: '',
-        price: '',
-        downPayment: '',
-        numberOfCheques: '',
-        amenities: '', // Fix type error if amenities is expected to be array or string? It was [] above. Ideally keep []
-        // amenities: [], // Ah, original code had amenities: [] in reset, but state def says string[]?
-        // Let's stick to original structure (lines 48-67 of viewed file)
-        // I will just remove the duplicate assignedAgent line in my target replacement
-        // Wait, I can't easily edit line 49 AND 117 in one go with one chunk if they are far apart?
-        // view_file showed Lines 30-160. They are in same file. 
-        // I will use multi_replace for safety or two steps.
-        // Actually, let's just fix the reducer first.
         ownerName: '',
         price: '',
         downPayment: '',
@@ -96,6 +88,7 @@ const AddListingPage = () => {
   const { isLoading: isAuthLoading, token } = useAuth();
   const navigate = useNavigate();
   const [formData, dispatch] = useReducer(listingReducer, initialState);
+  const { balance, refreshData: refreshCredits } = useCredits();
   const [activeSection, setActiveSection] = useState('core');
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [qualityScore, setQualityScore] = useState(0);
@@ -104,6 +97,7 @@ const AddListingPage = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+  const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
 
   const [agents, setAgents] = useState<SelectOption[]>([]);
   const [loadingLookups, setLoadingLookups] = useState(false);
@@ -125,17 +119,37 @@ const AddListingPage = () => {
         const listing = res.data;
         console.log('Fetched listing data for edit:', listing);
 
+        // Parse available_from to determine available and availableDate
+        let available: 'immediately' | 'fromDate' = 'immediately';
+        let availableDate: Date | null = null;
+
+        if (listing.available_from) {
+          const availableFromDate = new Date(listing.available_from);
+          const now = new Date();
+          const diffInDays = Math.floor((availableFromDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+          // If the date is more than 1 day in the future, treat it as "fromDate"
+          if (diffInDays > 1) {
+            available = 'fromDate';
+            availableDate = availableFromDate;
+          }
+        }
+
         const payload = {
           uae_emirate: listing.uae_emirate || '',
+          city: listing.city || null,
           category: listing.category || null,
           offeringType: listing.price?.type || null,
+          rentalPeriod: listing.rental_period || null,
           propertyType: listing.type || '',
-          bedrooms: listing.bedrooms || '',
-          bathrooms: listing.bathrooms || '',
+          bedrooms: String(listing.bedrooms || ''),
+          bathrooms: String(listing.bathrooms || ''),
           size: String(listing.size || ''),
           price: String(listing.price?.amounts?.[listing.price?.type] || ''),
           title: (listing.title?.en && /^draft:\s*/i.test(listing.title.en)) ? '' : (listing.title?.en || ''),
+          title_ar: listing.title?.ar || '',
           description: listing.description?.en || '',
+          description_ar: listing.description?.ar || '',
           reference: listing.reference || '',
           developer: String(listing.developer_id || ''),
           unitNumber: listing.unit_number || '',
@@ -143,14 +157,20 @@ const AddListingPage = () => {
           furnishingType: listing.furnishing_type || null,
           age: String(listing.age || ''),
           numberOfFloors: listing.number_of_floors ? String(listing.number_of_floors) : '',
+          projectStatus: listing.project_status || '',
           ownerName: listing.owner_name || '',
           amenities: listing.amenities || [],
-          images: listing.images?.map((img: any) => ({ url: img.original?.url || img.url })) || [], // Map existing images
+          images: listing.images?.map((img: any) => ({ url: img.original?.url || img.url })) || [],
           propertyLocation: listing.location?.id ? { value: listing.location.id, label: listing.location.title_en || '' } : null,
           assignedAgent: listing.assigned_to?.id ? { value: listing.assigned_to.id, label: listing.assigned_to.name || '' } : null,
           permitType: listing.permit_type || null,
           reraPermitNumber: listing.rera_permit_number || '',
           dtcmPermitNumber: listing.dtcm_permit_number || '',
+          downPayment: String(listing.down_payment || ''),
+          numberOfCheques: String(listing.number_of_cheques || ''),
+          googleAddress: listing.location?.title_en || '',
+          available,
+          availableDate,
         };
         console.log('Dispatching payload:', payload);
 
@@ -256,25 +276,30 @@ const AddListingPage = () => {
   }, [formData]);
 
 
-  const handlePublish = async () => {
+  const handlePublish = () => {
     if (!completedSteps.includes('core')) {
       setError("Please complete the 'Core details' section first.");
       return;
     }
+    setIsPromotionModalOpen(true);
+  };
 
+  const handleConfirmPublish = async (plan: string, duration: string, cost: number, autoRenew: boolean) => {
     if (!token) {
       setError("Authentication required. Please log in again.");
       return;
     }
-
+    setIsPromotionModalOpen(false);
     setIsSubmitting(true);
     setError(null);
-    setShowSuccess(false);
 
-    console.log('Developer value:', formData.developer, 'Type:', typeof formData.developer);
-
+    // 1. Prepare Listing Data (Save as Draft first)
+    // We intentionally do NOT set state to 'live' here. We let the publish endpoint handle that.
     const listingData = {
-      assigned_to: { id: (formData.assignedAgent as SelectOption).value },
+      reference: formData.reference,
+      assigned_to: formData.assignedAgent ? { id: (formData.assignedAgent as SelectOption).value } : { id: 274026 },
+      // Update: Keep as draft during save
+      state: { stage: 'draft', type: 'pending_publishing' },
       available_from: formData.available === 'immediately'
         ? new Date().toISOString()
         : (formData.availableDate
@@ -286,11 +311,16 @@ const AddListingPage = () => {
         downpayment: formData.offeringType === 'sale' && formData.downPayment ? Number(formData.downPayment) : undefined,
         number_of_cheques: formData.offeringType === 'rent' && formData.numberOfCheques ? Number(formData.numberOfCheques) : undefined
       },
+      rental_period: formData.rentalPeriod,
       uae_emirate: formData.uae_emirate,
+      city: formData.city,
       title: { en: formData.title },
       description: { en: formData.description },
       location: formData.propertyLocation
-        ? { id: String((formData.propertyLocation as SelectOption).value) }
+        ? {
+          id: String((formData.propertyLocation as SelectOption).value),
+          name: (formData.propertyLocation as SelectOption).label // Include name for upsert
+        }
         : {
           name_en: formData.googleAddress,
           coordinates: (formData.latitude && formData.longitude) ? { lat: formData.latitude, lng: formData.longitude } : null
@@ -299,7 +329,6 @@ const AddListingPage = () => {
       category: formData.category,
       amenities: formData.amenities,
       type: formData.propertyType,
-      reference: formData.reference,
       bedrooms: formData.bedrooms,
       bathrooms: formData.bathrooms,
       size: Number(formData.size),
@@ -310,23 +339,17 @@ const AddListingPage = () => {
       age: Number(formData.age),
       number_of_floors: formData.numberOfFloors ? Number(formData.numberOfFloors) : null,
       owner_name: formData.ownerName,
+      project_status: formData.projectStatus,
       quality_score: { value: qualityScore },
-      state: { stage: 'live', type: 'published' },
       permit_type: formData.permitType,
       rera_permit_number: formData.reraPermitNumber,
       dtcm_permit_number: formData.dtcmPermitNumber
     };
 
-    console.log('Final listingData:', listingData);
-
     const apiPayload = new FormData();
-
-    // Split images into existing (URLs) and new (Files)
     const existingImages = formData.images.filter((img): img is { url: string } => !('lastModified' in img) && 'url' in img);
     const newFiles = formData.images.filter((img): img is File => img instanceof File);
 
-    // Add existing images to payload data structure
-    // Backend expects { media: { images: [{ original: { url: ... } }] } }
     const finalListingData = {
       ...listingData,
       media: {
@@ -335,13 +358,15 @@ const AddListingPage = () => {
     };
 
     apiPayload.append('data', JSON.stringify(finalListingData));
-
     newFiles.forEach(file => {
       apiPayload.append('images', file);
     });
 
     try {
-      if (isEditMode) {
+      let targetId = id;
+
+      // 2. Perform Save (Create or Update)
+      if (isEditMode && id) {
         await axios.patch(`${import.meta.env.VITE_BASE_URL}/api/listings/listings/${id}`, apiPayload, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -349,16 +374,47 @@ const AddListingPage = () => {
           }
         });
       } else {
-        await axios.post(`${import.meta.env.VITE_BASE_URL}/api/listings/listings`, apiPayload, {
+        const createResponse = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/listings/listings`, apiPayload, {
           headers: {
             'Content-Type': 'multipart/form-data',
             'Authorization': `Bearer ${token}`
           }
         });
+        targetId = createResponse.data.id || createResponse.data.data?.id; // Handle response structure
       }
+
+      if (!targetId) {
+        throw new Error("Could not determine listing ID for publishing.");
+      }
+
+      console.log('Publishing listing with ID:', targetId);
+
+      // 3. Call Publish Endpoint (Deduct Credits & Set Live)
+      const publishResponse = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/api/listings/listings/publish`,
+        {
+          listing_ids: [targetId],
+          deduct_credits: true,
+          promotion_plan: plan,
+          duration: duration,
+          auto_renew: autoRenew
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      console.log('Publish response:', publishResponse.data);
+
+      refreshCredits(); // Refresh balance context
       setShowSuccess(true);
       setTimeout(() => navigate('/listings-management'), 3000);
+
     } catch (err: unknown) {
+      console.error("Publish error:", err);
       const errorMsg = err instanceof Error ? err.message : "Error: Could not publish listing.";
       setError(errorMsg);
     } finally {
@@ -389,6 +445,7 @@ const AddListingPage = () => {
       assigned_to: formData.assignedAgent ? { id: (formData.assignedAgent as SelectOption).value } : { id: 274026 },
       state: { stage: 'draft', type: 'pending_publishing' },
       uae_emirate: formData.uae_emirate || '',
+      city: formData.city || null,
       title: { en: formData.title || `Draft: ${formData.reference}` },
       description: { en: formData.description || '' },
       category: formData.category || '',
@@ -397,6 +454,7 @@ const AddListingPage = () => {
         type: formData.offeringType || 'rent',
         amounts: { [formData.offeringType || 'rent']: Number(formData.price) || 0 }
       },
+      rental_period: formData.rentalPeriod,
       location: formData.propertyLocation ? { id: String((formData.propertyLocation as SelectOption).value) } : null,
       quality_score: { value: qualityScore },
       bedrooms: formData.bedrooms,
@@ -405,6 +463,7 @@ const AddListingPage = () => {
       furnishing_type: formData.furnishingType,
       developer_id: formData.developer ? Number(formData.developer) : null,
       owner_name: formData.ownerName,
+      project_status: formData.projectStatus,
       amenities: formData.amenities,
       permit_type: formData.permitType,
       rera_permit_number: formData.reraPermitNumber,
@@ -499,6 +558,12 @@ const AddListingPage = () => {
     <>
       <SuccessToast message="Listing created successfully!" show={showSuccess} onClose={() => setShowSuccess(false)} />
       <ErrorToast message={error || ''} show={!!error} onClose={() => setError(null)} />
+      <PromotionModal
+        isOpen={isPromotionModalOpen}
+        onClose={() => setIsPromotionModalOpen(false)}
+        onConfirm={handleConfirmPublish}
+        availableCredits={balance.current}
+      />
       <div className="bg-white bg-gray-50 min-h-screen flex flex-col">
         <AddListingHeader qualityScore={qualityScore} onPublish={handlePublish} onExit={handleExit} isSubmitting={isSubmitting} />
         <div className="flex-grow grid grid-cols-1 lg:grid-cols-2 gap-8 p-4 sm:p-6 lg:p-8">

@@ -48,7 +48,7 @@ const CompliancePieChart = ({ percentage }: { percentage: number }) => {
 const UserDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { roles, isLoading: isAuthLoading } = useAuth();
+    const { roles, isLoading: isAuthLoading, refreshUser } = useAuth();
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
@@ -141,12 +141,26 @@ const UserDetails = () => {
 
                 // Helper to parse phone
                 const parsePhone = (mobile: string) => {
-                    if (mobile?.startsWith('+')) {
-                        const code = mobile.substring(1, 4);
-                        const num = mobile.substring(4);
-                        return { code, num };
+                    if (!mobile) return { code: '971', num: '' };
+
+                    // If doesn't start with +, assume it's just the number without code
+                    if (!mobile.startsWith('+')) return { code: '971', num: mobile };
+
+                    const cleanMobile = mobile.substring(1); // remove +
+
+                    // Match against available country codes, longest first
+                    const sortedCodes = [...countryCodes].sort((a, b) => b.value.length - a.value.length);
+                    for (const country of sortedCodes) {
+                        if (cleanMobile.startsWith(country.value)) {
+                            return {
+                                code: country.value,
+                                num: cleanMobile.substring(country.value.length)
+                            };
+                        }
                     }
-                    return { code: '971', num: mobile || '' };
+
+                    // Fallback to 3 digits if no match
+                    return { code: cleanMobile.substring(0, 3), num: cleanMobile.substring(3) };
                 };
 
                 const mainPhone = parsePhone(data.mobile);
@@ -254,6 +268,8 @@ const UserDetails = () => {
 
         try {
             await axios.patch(`${import.meta.env.VITE_BASE_URL}/api/users/${id}`, payload);
+            await refreshUser(); // تحديث بيانات المستخدم في السياق (Context) لتحديث الشريط الجانبي
+            console.log('User refreshed after private save');
             setSuccessPrivate('Private settings saved!');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setFormData(prev => ({ ...prev, password: '' }));
@@ -311,6 +327,8 @@ const UserDetails = () => {
 
         try {
             await axios.patch(`${import.meta.env.VITE_BASE_URL}/api/users/${id}`, payload);
+            await refreshUser(); // تحديث بيانات المستخدم في السياق (Context) لتحديث الشريط الجانبي
+            console.log('User refreshed after public save');
             setSuccessPublic('Public profile updated!');
             setIsPublicSectionOpen(true);
             setTimeout(() => window.scrollTo({ top: document.getElementById('public-profile-section')?.offsetTop || 0, behavior: 'smooth' }), 100);

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapPin, BedDouble, Bath, Ruler, Check, Monitor, Smartphone, User, FileText, Home } from 'lucide-react';
 import type { ListingState } from '../../../types';
 
-const ListingPreview = ({ state, images = [] }: { state: ListingState; images?: File[] }) => {
+const ListingPreview = ({ state, images = [] }: { state: ListingState; images?: (File | { url: string; preview?: string; })[] }) => {
 
     const locationLabel = state.propertyLocation ? state.propertyLocation.label : 'Listing location';
     const agentLabel = state.assignedAgent ? state.assignedAgent.label : 'Agent Name';
@@ -10,11 +10,20 @@ const ListingPreview = ({ state, images = [] }: { state: ListingState; images?: 
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
     useEffect(() => {
-        const newImagePreviews = images.map(file => URL.createObjectURL(file));
+        const newImagePreviews = images.map(img => {
+            if (img instanceof File) {
+                return URL.createObjectURL(img);
+            }
+            return img.preview || img.url;
+        });
         setImagePreviews(newImagePreviews);
 
         return () => {
-            newImagePreviews.forEach(url => URL.revokeObjectURL(url));
+            images.forEach(img => {
+                if (img instanceof File) {
+                    URL.revokeObjectURL(URL.createObjectURL(img)); // This is actually inefficient but revoking is important
+                }
+            });
         };
     }, [images]);
 

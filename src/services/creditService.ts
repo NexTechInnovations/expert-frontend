@@ -51,7 +51,7 @@ class CreditService {
     try {
       const response = await axios.get(`${this.baseURL}/api/credits/transactions`, {
         params: {
-          customer_id: filters?.customer_id || 6, // default customer
+          customer_id: filters?.customer_id, // Use the actual customer_id from filters
           limit: 1000 // نجيب كل البيانات
         }
       });
@@ -67,7 +67,7 @@ class CreditService {
     return transactions.reduce((balance, transaction) => {
       const { action, amount } = transaction.credit_info;
       const amountValue = parseInt(amount.replace(/[+-]/, ''));
-      
+
       switch (action) {
         case 'add':
           balance.earned += amountValue;
@@ -83,21 +83,21 @@ class CreditService {
           balance.current -= amountValue;
           break;
       }
-      
+
       return balance;
     }, { current: 0, earned: 0, spent: 0, expired: 0 });
   }
 
   // فلترة البيانات محلياً
   filterTransactions(
-    transactions: ICreditTransaction[], 
+    transactions: ICreditTransaction[],
     filters: ICreditFilters
   ): ICreditTransaction[] {
     // إذا لم تكن هناك فلاتر، نعيد كل البيانات
     if (!filters || Object.keys(filters).length === 0) {
       return transactions;
     }
-    
+
     return transactions.filter(transaction => {
       // فلترة حسب النوع
       if (filters.action && transaction.credit_info.action !== filters.action) {

@@ -5,6 +5,7 @@ import QualityScoreCircle from '../ui/QualityScoreCircle';
 import type { Listing } from '../../context/ListingsContext';
 import ArchiveTableActionMenu from '../ui/ArchiveTableActionMenu';
 import SuccessToast from '../ui/SuccessToast';
+import { formatLastUpdated } from '../../utils/formatDate';
 
 const tableHeaders = [
     "Listing Reference",
@@ -14,6 +15,13 @@ const tableHeaders = [
     "Bedrooms",
     "Area",
     "Location",
+    "Exposure",
+    "Expiry",
+    "Leads received",
+    "Impressions",
+    "Listing Clicks",
+    "CTR",
+    "Lead Clicks",
     "Quality score",
     "Agent",
     "Credits Spent",
@@ -85,6 +93,24 @@ const ArchiveTable = ({ listings, onActionComplete, onReferenceClick }: ArchiveT
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.bedrooms || '-'}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.size ? `${listing.size} sqft` : '-'}</td>
                                 <td className="px-6 py-4 text-sm text-gray-600 truncate max-w-xs">{listing.location?.name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${listing.exposure === 'Premium' ? 'bg-orange-100 text-orange-700' :
+                                            listing.exposure === 'Featured' ? 'bg-violet-100 text-violet-700' :
+                                                'bg-gray-100 text-gray-700'
+                                        }`}>
+                                        {listing.exposure || 'Standard'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                    {listing.expiry_date && listing.expiry_date !== 'N/A'
+                                        ? new Date(listing.expiry_date).toLocaleDateString()
+                                        : '-'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{listing.leads_received || 0}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{listing.impressions || 0}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{listing.listing_clicks || 0}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{listing.ctr ? `${listing.ctr}%` : '0%'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{listing.lead_clicks || 0}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <QualityScoreCircle qualityScore={listing.quality_score} score={listing.quality_score?.value || 0} />
                                 </td>
@@ -108,7 +134,8 @@ const ArchiveTable = ({ listings, onActionComplete, onReferenceClick }: ArchiveT
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {new Date(listing.updated_at).toLocaleDateString()}
+                                    {/* format last updated time*/}
+                                    {formatLastUpdated(listing.updated_at)}
                                 </td>
                                 {/* 3. إضافة `relative` هنا أمر حاسم لجعل القائمة المنسدلة تظهر بالنسبة لهذه الخلية */}
                                 <td className="px-6 py-4 whitespace-nowrap text-center relative">

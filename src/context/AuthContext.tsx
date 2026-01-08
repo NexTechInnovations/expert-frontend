@@ -7,6 +7,7 @@ interface User {
   email: string | undefined;
   role: string;
   legacyRole: string;
+  profilePhotoUrl?: string; // إضافة رابط الصورة للمستخدم
 }
 interface Role {
   id: number;
@@ -23,6 +24,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>; // وظيفة لتحديث بيانات المستخدم فوراً
   roles: Role[]
 }
 
@@ -39,7 +41,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchUser = useCallback(async (currentToken: string) => {
     try {
       axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
-      const { data } = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/users/me`);
+      const { data } = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/users/me?t=${new Date().getTime()}`);
+      console.log('User data from API:', data);
       setUser(data);
     } catch (error) {
       console.error("Failed to fetch user, logging out.", error);
@@ -55,7 +58,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchRoles = useCallback(async () => {
     if (roles.length > 0) return;
     try {
+      console.log('Fetching roles from:', `${import.meta.env.VITE_BASE_URL}/api/roles`);
       const { data } = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/roles`);
+      console.log('Roles data received from API:', data);
 
       // Order requested by user
       const roleOrder = [
@@ -86,19 +91,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [roles.length]);
 
   useEffect(() => {
-    if (effectRan.current === true) {
-      return;
-    }
-
     if (token) {
+      console.log('AuthContext: Token found, fetching user and roles...');
       fetchUser(token);
       fetchRoles();
     } else {
+      console.log('AuthContext: No token, skipping fetch');
       setIsLoading(false);
-    }
-
-    return () => {
-      effectRan.current = true;
     }
   }, [token, fetchUser, fetchRoles]);
 
@@ -135,8 +134,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const refreshUser = useCallback(async () => {
+    if (token) {
+      await fetchUser(token);
+    }
+  }, [token, fetchUser]);
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, roles }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout, refreshUser, roles }}>
       {!isLoading && children}
     </AuthContext.Provider>
   );
