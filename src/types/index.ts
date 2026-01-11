@@ -69,6 +69,7 @@ export interface ListingState {
   googleAddress?: string | null;
   googleAddressComponents?: any; // or specific type
   updatedAt?: string | null;
+  createdAt?: string | null;
 }
 
 export type ListingAction =

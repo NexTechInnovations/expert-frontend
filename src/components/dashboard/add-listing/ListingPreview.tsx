@@ -60,29 +60,37 @@ const ListingPreview = ({ state, images = [], listingId, isFullPage = false }: {
 
     // Unified Image Component using Grid Layout
     const ImageGallery = () => (
-        <div className={`grid grid-cols-3 gap-2 mb-6 w-full overflow-hidden ${isFullPage ? 'h-[450px]' : 'aspect-[3/2]'}`}>
-            <div className="col-span-2 relative bg-gray-100 rounded-lg overflow-hidden h-full">
+        <div className={`grid grid-cols-3 gap-2 mb-6 w-full bg-gray-100 rounded-lg overflow-hidden ${isFullPage ? 'h-[450px]' : 'aspect-[3/2]'}`}>
+            <div className="col-span-2 relative h-full bg-gray-200">
                 {imagePreviews[0] ? (
-                    <img src={imagePreviews[0]} alt="Property Main" className="w-full h-full object-cover" />
+                    <img src={imagePreviews[0]} alt="Property Main" className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-xs">No images</div>
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs">No images</div>
                 )}
                 {imagePreviews.length > 0 && (
-                    <span className="absolute bottom-2 right-2 bg-white/90 text-gray-900 text-[10px] font-semibold px-2 py-1 rounded-md flex items-center gap-1 shadow-sm z-10 backdrop-blur-sm">
-                        <Camera size={12} /> {imagePreviews.length}
+                    <span className="absolute bottom-3 left-3 bg-black/75 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg z-50 backdrop-blur-md border border-white/20">
+                        <Camera size={13} strokeWidth={2.5} />
+                        <span>{imagePreviews.length} images</span>
                     </span>
                 )}
             </div>
             <div className="grid grid-rows-2 gap-2 col-span-1 h-full">
-                <div className="bg-gray-100 rounded-lg overflow-hidden relative h-full group">
+                <div className="relative h-full bg-gray-200 overflow-hidden group">
                     {imagePreviews[1] ? (
-                        <img src={imagePreviews[1]} alt="Property Sub 1" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    ) : <div className="w-full h-full bg-gray-50/50" />}
+                        <img src={imagePreviews[1]} alt="Property Sub 1" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : <div className="absolute inset-0 bg-gray-100" />}
                 </div>
-                <div className="bg-gray-100 rounded-lg overflow-hidden relative h-full group">
+                <div className="relative h-full bg-gray-200 overflow-hidden group">
                     {imagePreviews[2] ? (
-                        <img src={imagePreviews[2]} alt="Property Sub 2" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    ) : <div className="w-full h-full bg-gray-50/50" />}
+                        <div className="relative w-full h-full">
+                            <img src={imagePreviews[2]} alt="Property Sub 2" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                            {imagePreviews.length > 3 && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-semibold text-lg cursor-pointer z-10">
+                                    +{imagePreviews.length - 3}
+                                </div>
+                            )}
+                        </div>
+                    ) : <div className="absolute inset-0 bg-gray-100" />}
                 </div>
             </div>
         </div>
@@ -185,29 +193,31 @@ const ListingPreview = ({ state, images = [], listingId, isFullPage = false }: {
 
                 <div className="my-6 pt-6 border-t border-gray-100">
                     <h3 className="text-lg font-bold mb-4">Location</h3>
-                    <div className={`relative bg-gray-200 rounded-lg overflow-hidden ${isFullPage ? 'h-[350px]' : 'h-40'}`}>
+                    <div className={`relative bg-gray-100 rounded-lg overflow-hidden ${isFullPage ? 'h-[350px]' : 'h-40'}`}>
                         <iframe
-                            className="absolute inset-0 w-full h-full filter opacity-75 grayscale-[20%]"
+                            className="absolute inset-0 w-full h-full filter grayscale-[20%]"
                             frameBorder="0"
                             scrolling="no"
                             marginHeight={0}
                             marginWidth={0}
-                            src={`https://maps.google.com/maps?q=${encodeURIComponent((state.propertyLocation ? locationLabel : '') + ', ' + (state.uae_emirate ? state.uae_emirate.replace('_', ' ') : 'UAE'))}&t=m&z=${state.propertyLocation ? 15 : 10}&output=embed&iwloc=near`}
+                            src={`https://maps.google.com/maps?q=${encodeURIComponent((state.propertyLocation ? locationLabel : '') + ', ' + (state.uae_emirate ? state.uae_emirate.replace('_', ' ') : 'UAE'))}&t=m&z=${state.propertyLocation ? 14 : 10}&output=embed&iwloc=near`}
                             title="Property Location"
                         ></iframe>
-                        <div className="absolute inset-x-4 top-4 bg-white p-3 rounded-md shadow-md flex justify-between items-center z-10">
-                            <div className="flex items-center gap-2 text-sm truncate">
-                                <MapPin size={16} className="text-gray-500 flex-shrink-0" />
-                                <span className="truncate">{locationLabel}</span>
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
+                            <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl p-4 flex items-center justify-between pointer-events-auto">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <MapPin className="text-gray-900 shrink-0" size={20} />
+                                    <span className="font-semibold text-gray-900 truncate text-base">{locationLabel}</span>
+                                </div>
+                                <a
+                                    href={state.propertyLocation ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${locationLabel}, ${state.uae_emirate || 'UAE'}`)}` : '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`flex-shrink-0 flex items-center gap-1 text-sm font-semibold ${state.propertyLocation ? 'text-violet-700 hover:text-violet-800' : 'text-gray-400 cursor-not-allowed'}`}
+                                >
+                                    View on map →
+                                </a>
                             </div>
-                            <a
-                                href={state.propertyLocation ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${locationLabel}, ${state.uae_emirate || 'UAE'}`)}` : '#'}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`text-sm font-semibold flex-shrink-0 ${state.propertyLocation ? 'text-violet-600 hover:text-violet-700' : 'text-gray-400 cursor-not-allowed'}`}
-                            >
-                                View on map →
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -256,7 +266,7 @@ const ListingPreview = ({ state, images = [], listingId, isFullPage = false }: {
                         <div className="flex justify-between text-sm mt-2">
                             <span className="text-gray-500">Listed</span>
                             <span className="font-medium text-gray-800">
-                                {state.updatedAt ? formatDistanceToNow(new Date(state.updatedAt), { addSuffix: true }) : 'Just now'}
+                                {state.createdAt ? formatDistanceToNow(new Date(state.createdAt), { addSuffix: true }) : (state.updatedAt ? formatDistanceToNow(new Date(state.updatedAt), { addSuffix: true }) : 'Just now')}
                             </span>
                         </div>
                     </div>

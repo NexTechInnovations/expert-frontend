@@ -65,7 +65,8 @@ const ListingPreviewPage = () => {
                     latitude: null,
                     longitude: null,
                     googleAddressComponents: null,
-                    updatedAt: listing.updated_at || null
+                    updatedAt: listing.updated_at || null,
+                    createdAt: listing.created_at || null
                 };
 
                 setListingState(mappedState);

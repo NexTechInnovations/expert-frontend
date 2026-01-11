@@ -373,6 +373,7 @@ const ListingsManagement = () => {
                 onSelectAll={handleSelectAll}
                 onActionComplete={handleActionComplete}
                 onReferenceClick={(id) => setSelectedListingId(id)}
+                isPublished={!filters.draft}
             />;
         } else {
             return (
@@ -481,7 +482,7 @@ const ListingsManagement = () => {
                             {!isSelectionMode && listings.length > 0 &&
                                 <button onClick={() => setIsSelectionMode(true)} className="text-sm bg-white border border-violet-600 text-violet-600 font-semibold py-2 px-4 rounded-md hover:bg-violet-50">Select Listings</button>
                             }
-                            <Link to="/add-listing"><button className="bg-red-600 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2"><Plus size={16} />List new property</button></Link>
+                            <Link to="/add-listing" target="_blank" rel="noopener noreferrer"><button className="bg-red-600 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2"><Plus size={16} />List new property</button></Link>
                         </div>
                     </div>
 
@@ -563,7 +564,7 @@ const ListingsManagement = () => {
                                 Select Listings
                             </button>
                         )}
-                        <Link to="/add-listing" className="w-full max-w-xs">
+                        <Link to="/add-listing" className="w-full max-w-xs" target="_blank" rel="noopener noreferrer">
                             <button className="bg-red-600 text-white font-semibold py-2.5 px-1 rounded-lg flex items-center justify-center gap-2 w-full hover:bg-red-700">
                                 <Plus size={16} />List new property
                             </button>

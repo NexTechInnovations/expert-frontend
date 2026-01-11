@@ -49,6 +49,11 @@ const AppRoutes = () => {
       <Route path="/login" element={token ? <Navigate to="/" /> : <LoginPage />} />
       <Route path="/add-listing" element={<AddListingPage />} />
       <Route path="/listings/preview/:id" element={<ListingPreviewPage />} />
+      <Route path="/listings/edit/:id" element={
+        <ListingsProvider>
+          <AddListingPage />
+        </ListingsProvider>
+      } />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<DashboardLayout />}>
@@ -58,11 +63,6 @@ const AppRoutes = () => {
           <Route path="listings-management" element={
             <ListingsProvider>
               <ListingsManagement />
-            </ListingsProvider>
-          } />
-          <Route path="listings/edit/:id" element={
-            <ListingsProvider>
-              <AddListingPage />
             </ListingsProvider>
           } />
 

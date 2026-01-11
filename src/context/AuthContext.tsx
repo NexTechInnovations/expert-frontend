@@ -8,6 +8,8 @@ interface User {
   role: string;
   legacyRole: string;
   clientId: number;
+  firstName: string;
+  lastName: string;
   profilePhotoUrl?: string; // إضافة رابط الصورة للمستخدم
 }
 interface Role {

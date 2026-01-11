@@ -42,6 +42,13 @@ export interface Listing {
     };
     credits_spent?: number;
     price_realism?: string;
+    exposure?: string;
+    expiry_date?: string;
+    leads_received?: number;
+    impressions?: number;
+    clicks?: number;
+    ctr?: number;
+    lead_clicks?: number;
 }
 
 export interface Pagination {

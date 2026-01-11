@@ -51,58 +51,50 @@ const CoreDetailsForm = ({
     dispatch({ type: "UPDATE_FIELD", field, value });
   };
 
+  const validateForm = () => {
+    const missing: string[] = [];
+    if (!state.uae_emirate) missing.push("Emirate");
+    if (!state.category) missing.push("Category");
+    if (!state.offeringType) missing.push("Offering Type");
+    if (state.offeringType === "rent" && !state.rentalPeriod) missing.push("Rental Period");
+    if (!state.propertyType) missing.push("Property Type");
+    if (!state.propertyLocation) missing.push("Property Location");
+    if (!state.assignedAgent) missing.push("Assigned Agent");
+    if (!state.reference) missing.push("Reference");
+
+    // Permit Validations
+    if (state.uae_emirate === "dubai") {
+      if (!state.permitType) missing.push("Permit Type");
+      else if (state.permitType !== "none") {
+        if (state.permitType === "rera" && (!state.reraPermitNumber || state.reraPermitNumber.length <= 5)) missing.push("Valid RERA Permit Number");
+        if (state.permitType === "dtcm" && (!state.dtcmPermitNumber || state.dtcmPermitNumber.length <= 5)) missing.push("Valid DTCM Permit Number");
+      }
+    }
+
+    if (state.uae_emirate === "abu_dhabi") {
+      if (!state.dtcmPermitNumber || state.dtcmPermitNumber.length <= 5) missing.push("ADREC permit");
+      if (!state.reraPermitNumber || state.reraPermitNumber.length <= 5) missing.push("Broker license");
+    }
+
+    if (state.uae_emirate === "northern_emirates") {
+      if (!state.city) missing.push("City");
+      else if (state.city === "al_ain") {
+        if (!state.dtcmPermitNumber || state.dtcmPermitNumber.length <= 5) missing.push("ADREC permit");
+        if (!state.reraPermitNumber || state.reraPermitNumber.length <= 5) missing.push("Broker license");
+      }
+    }
+
+    return missing;
+  };
+
   useEffect(() => {
-    const {
-      uae_emirate,
-      city,
-      category,
-      offeringType,
-      rentalPeriod,
-      propertyType,
-      propertyLocation,
-      assignedAgent,
-      reference,
-      permitType,
-      reraPermitNumber,
-      dtcmPermitNumber,
-    } = state;
-    const baseConditionsMet =
-      uae_emirate &&
-      category &&
-      offeringType &&
-      propertyType &&
-      propertyLocation &&
-      assignedAgent &&
-      reference;
-
-    // Check rental period is selected if offering type is rent
-    const rentalPeriodConditionsMet =
-      offeringType === "rent" ? rentalPeriod !== null : true;
-
-    const dubaiPermitConditionsMet =
-      uae_emirate === "dubai"
-        ? permitType &&
-        (permitType === "none" ||
-          (reraPermitNumber && reraPermitNumber.length > 5) ||
-          (dtcmPermitNumber && dtcmPermitNumber.length > 5))
-        : true;
-
-    const abuDhabiPermitConditionsMet =
-      uae_emirate === "abu_dhabi"
-        ? dtcmPermitNumber && dtcmPermitNumber.length > 5 && reraPermitNumber && reraPermitNumber.length > 5
-        : true;
-
-    const northernEmiratesPermitConditionsMet =
-      uae_emirate === "northern_emirates"
-        ? (city === "al_ain"
-          ? (dtcmPermitNumber && dtcmPermitNumber.length > 5 && reraPermitNumber && reraPermitNumber.length > 5)
-          : (city === "other"))
-        : true;
-
-    if (baseConditionsMet && rentalPeriodConditionsMet && dubaiPermitConditionsMet && abuDhabiPermitConditionsMet && northernEmiratesPermitConditionsMet) {
+    const missing = validateForm();
+    if (missing.length === 0) {
       onComplete();
     }
   }, [state, onComplete]);
+
+
 
   const getPropertyTypeOptions = () => {
     if (state.category === "residential")
@@ -433,6 +425,7 @@ const CoreDetailsForm = ({
           </FormLabel>
         </>
       )}
+      <div className="flex justify-end pt-4" />
     </div>
   );
 };

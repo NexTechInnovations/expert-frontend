@@ -42,7 +42,7 @@ function listingReducer(state: ListingState, action: ListingAction): ListingStat
       return {
         ...state,
         permitType: null,
-        city: null,
+        // city: null, // Keep city for memory when switching back to NE
         reraPermitNumber: '',
         dtcmPermitNumber: '',
         category: null,
@@ -177,6 +177,7 @@ const AddListingPage = () => {
           available,
           availableDate,
           updatedAt: listing.updated_at || null,
+          createdAt: listing.created_at || null,
         };
 
 
@@ -309,7 +310,7 @@ const AddListingPage = () => {
       assigned_to: data.assignedAgent ? { id: (data.assignedAgent as SelectOption).value } : { id: 274026 },
       state: { stage: 'draft', type: 'pending_publishing' },
       uae_emirate: data.uae_emirate || '',
-      city: data.city || null,
+      city: data.uae_emirate === 'northern_emirates' ? (data.city || null) : null,
       title: { en: data.title || `Draft: ${data.reference}` },
       description: { en: data.description || '' },
       category: data.category || '',
@@ -447,7 +448,7 @@ const AddListingPage = () => {
       },
       rental_period: formData.rentalPeriod,
       uae_emirate: formData.uae_emirate,
-      city: formData.city,
+      city: formData.uae_emirate === 'northern_emirates' ? formData.city : null,
       title: { en: formData.title },
       description: { en: formData.description },
       location: formData.propertyLocation
@@ -580,7 +581,7 @@ const AddListingPage = () => {
       assigned_to: formData.assignedAgent ? { id: (formData.assignedAgent as SelectOption).value } : { id: 274026 },
       state: { stage: 'draft', type: 'pending_publishing' },
       uae_emirate: formData.uae_emirate || '',
-      city: formData.city || null,
+      city: formData.uae_emirate === 'northern_emirates' ? (formData.city || null) : null,
       title: { en: formData.title || `Draft: ${formData.reference}` },
       description: { en: formData.description || '' },
       category: formData.category || '',

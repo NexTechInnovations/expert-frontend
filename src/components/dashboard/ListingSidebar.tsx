@@ -291,7 +291,7 @@ const ListingSidebar = ({ listingId, onClose }: ListingSidebarProps) => {
                     {listing && (
                         <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t flex justify-end">
                             <button
-                                onClick={() => navigate(`/listings/edit/${listing.id}`)}
+                                onClick={() => window.open(`/listings/edit/${listing.id}`, '_blank')}
                                 className="w-full px-6 py-2.5 bg-white border border-violet-600 text-violet-600 font-bold rounded-lg hover:bg-violet-50 transition-colors"
                             >
                                 Edit

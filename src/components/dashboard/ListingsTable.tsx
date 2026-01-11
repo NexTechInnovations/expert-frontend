@@ -5,9 +5,34 @@ import QualityScoreCircle from '../ui/QualityScoreCircle';
 import ActionMenu from '../ui/ActionMenu';
 import type { Listing } from '../../context/ListingsContext';
 import SuccessToast from '../ui/SuccessToast';
-import { formatLastUpdated } from '../../utils/formatDate';
+import { formatRelativeTime } from '../../utils/formatDate';
 
 const tableHeaders = [
+    "Listing Reference",
+    "Category",
+    "Offering",
+    "Property Type",
+    "Bedrooms",
+    "Area",
+    "Location",
+    "Quality score",
+    "Agent",
+    "Credits Spent",
+    "Price",
+    "Price Realism",
+    "Status",
+    "Last updated",
+    "Exposure",
+    "Expiry",
+    "Leads received",
+    "Impressions",
+    "Listing Clicks",
+    "CTR",
+    "Lead Clicks",
+    "Action"
+];
+
+const draftHeaders = [
     "Listing Reference",
     "Category",
     "Offering",
@@ -33,11 +58,14 @@ interface ListingsTableProps {
     onSelectAll: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onActionComplete: () => void;
     onReferenceClick?: (id: string) => void;
+    isPublished?: boolean;
 }
 
-const ListingsTable = ({ listings, isSelectionMode, selectedIds, onSelectionChange, onSelectAll, onActionComplete, onReferenceClick }: ListingsTableProps) => {
+const ListingsTable = ({ listings, isSelectionMode, selectedIds, onSelectionChange, onSelectAll, onActionComplete, onReferenceClick, isPublished = false }: ListingsTableProps) => {
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [copyMessage, setCopyMessage] = useState('');
+
+    const headers = isPublished ? tableHeaders : draftHeaders;
 
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text).then(() => {
@@ -47,14 +75,13 @@ const ListingsTable = ({ listings, isSelectionMode, selectedIds, onSelectionChan
     };
 
     return (
-
         <div className="w-full bg-white border border-gray-200/80 rounded-lg">
-            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 relative">
                 <table className="min-w-full w-full">
-                    <thead className="bg-gray-50/50">
+                    <thead className="bg-gray-50">
                         <tr className="border-b border-gray-200/80">
                             {isSelectionMode && (
-                                <th scope="col" className="w-12 px-4 py-3 sticky left-0 bg-gray-50/50 z-10">
+                                <th scope="col" className="w-12 px-4 py-3 sticky left-0 bg-gray-50 z-30 shadow-[4px_0_12px_-2px_rgba(0,0,0,0.08)] border-r border-gray-200/50">
                                     <input
                                         type="checkbox"
                                         className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
@@ -63,8 +90,15 @@ const ListingsTable = ({ listings, isSelectionMode, selectedIds, onSelectionChan
                                     />
                                 </th>
                             )}
-                            {tableHeaders.map((header) => (
-                                <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-600 whitespace-nowrap">
+                            {headers.map((header, index) => (
+                                <th
+                                    key={header}
+                                    scope="col"
+                                    className={`px-6 py-3 text-left text-xs font-semibold text-gray-600 whitespace-nowrap ${index === 0
+                                        ? `sticky z-20 bg-gray-50 ${isSelectionMode ? 'left-[48px]' : 'left-0'} shadow-[4px_0_12px_-2px_rgba(0,0,0,0.08)] border-r border-gray-200/50`
+                                        : ''
+                                        }`}
+                                >
                                     {header}
                                 </th>
                             ))}
@@ -72,9 +106,9 @@ const ListingsTable = ({ listings, isSelectionMode, selectedIds, onSelectionChan
                     </thead>
                     <tbody className="bg-white">
                         {listings.map((listing) => (
-                            <tr key={listing.id} className="border-b last:border-b-0 hover:bg-gray-50/50">
+                            <tr key={listing.id} className="group border-b last:border-b-0 hover:bg-gray-50 transition-colors">
                                 {isSelectionMode && (
-                                    <td className="px-4 py-4 sticky left-0 bg-white hover:bg-gray-50/50 z-10">
+                                    <td className="px-4 py-4 sticky left-0 bg-white group-hover:bg-gray-50 z-30 shadow-[4px_0_12px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 transition-colors">
                                         <input
                                             type="checkbox"
                                             className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
@@ -83,7 +117,10 @@ const ListingsTable = ({ listings, isSelectionMode, selectedIds, onSelectionChan
                                         />
                                     </td>
                                 )}
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
+                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 ${true // Always first column (Reference)
+                                    ? `sticky z-20 bg-white group-hover:bg-gray-50 ${isSelectionMode ? 'left-[48px]' : 'left-0'} shadow-[4px_0_12px_-2px_rgba(0,0,0,0.08)] border-r border-gray-100 transition-colors`
+                                    : ''
+                                    }`}>
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => handleCopy(listing.reference)}
@@ -126,7 +163,18 @@ const ListingsTable = ({ listings, isSelectionMode, selectedIds, onSelectionChan
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-center"><span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 capitalize">{listing.state.type}</span></td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatLastUpdated(listing.updated_at)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatRelativeTime(listing.updated_at || listing.created_at || '')}</td>
+                                {isPublished && (
+                                    <>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.exposure || '-'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.expiry_date ? formatRelativeTime(listing.expiry_date) : '-'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.leads_received || 0}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.impressions || 0}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.clicks || 0}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.ctr ? `${listing.ctr}%` : '0%'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{listing.lead_clicks || 0}</td>
+                                    </>
+                                )}
 
                                 <td className="px-6 py-4 whitespace-nowrap text-center relative">
                                     <ActionMenu
